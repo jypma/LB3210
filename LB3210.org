@@ -46,11 +46,12 @@ Picture here
   - Make time (and timeouts) explicit
   - Use =Circuit Breaker= where applicable
 - Fail fast
+  - =System.exit(1)= is a viable error handler
 *** Circuit breaker
 Smart state machine towards 1 backend
 Picture here.
 * Infrastructure architecture
-** Shared data store
+** Partitioned data stores
 *** Partitioned row stores
 Each /row/ has a /key/ that specifies which partition(s) store data for that row. Data is typically stored in columns, following a schema.
 
@@ -75,6 +76,14 @@ Full-text search is often important when dealing with data.
 - Amazon: Hosted elasticsearch
 - Google: Hosted elasticsearch
 - Azure: Hosted elasticsearch
+** Single-server data stores
+- Avoid these unless specific requirements
+- Many moving parts needed to make master/slave failover work
+  - PostgreSQL: Multiple servers possible, but failures leak to the client. =pgBouncer= as alternative.
+  - MariaDB: Multiple servers possible with failover
+  - RabbitMQ: Multiple servers possible with failover, but failback doesn't work in Spring ([[https://jira.spring.io/browse/AMQP-318][AMQP-318]]) 
+- If you choose these, make failover testing part of your CI
+
 ** Monitoring and alerting
 - Logging need not be a cross-cutting concern
 - Create monitored metrics instead
@@ -158,3 +167,9 @@ Infrastructure as code
 ** Public REST API 
 ** Public developer guide
 ** Public service dashboard
+** Stay away from API gateways
+
+* Interesting links
+https://world.hey.com/joaoqalves/disasters-i-ve-seen-in-a-microservices-world-a9137a51
+https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
+
