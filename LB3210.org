@@ -30,7 +30,7 @@ P(everything working) = P(one service is working) ^ n_services
 Well, we have about 30 microservices, each with 3 copies. 
 That means that 63% of the time, at least one service is down somewhere.
 ** Creating services
-- Prefer shared (partitioned) data stores over single points of failure
+- Prefer sharded (partitioned) data stores over single points of failure
 - Always deploy more than 1 copy 
   - Investigate the need for a cluster-aware distributed framework
 - Your service dashboard is as important as your public API
