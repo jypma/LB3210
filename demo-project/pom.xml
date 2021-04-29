@@ -87,7 +87,7 @@
         <configuration>
           <sqlMigrationSeparator>__</sqlMigrationSeparator>
           <sqlMigrationPrefix>V</sqlMigrationPrefix>
-          <sqlMigrationSuffix>.sql</sqlMigrationSuffix>
+          <sqsqlMigrationSuffix>.sql</sqsqlMigrationSuffix>
           <locations>
             <location>filesystem:src/main/resources/flyway/migrations</location>
           </locations>
