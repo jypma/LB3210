@@ -20,7 +20,8 @@
           <sourceFiles>
             <directory>${basedir}</directory>
             <includes>
-              <include>plant-uml/**/*.iuml</include>
+              <include>**/*.iuml</include>
+
             </includes>
           </sourceFiles>
           <format>svg</format>
