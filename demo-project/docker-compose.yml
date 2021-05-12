@@ -4,10 +4,19 @@ services:
 
   db:
     image: postgres:13.2-alpine
-    restart: always
+    # Uncomment this to have the DB come up when you start docker / your laptop:
+    #restart: always
     environment:
       POSTGRES_USER: demo
       POSTGRES_DB: demo
       POSTGRES_PASSWORD: example
     ports:
       - 5432:5432
+
+  rabbitmq:
+    image: rabbitmq:3.8.16-alpine
+    # Uncomment this to have the DB come up when you start docker / your laptop:
+    #restart: always
+    ports:
+      - 5672:5672    # AMQP
+      - 15672:15672  # Web UI
