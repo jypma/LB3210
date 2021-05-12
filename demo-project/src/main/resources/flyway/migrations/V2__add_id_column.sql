@@ -1,0 +1,3 @@
+ALTER TABLE flyway_test DROP CONSTRAINT flyway_test_pkey;
+
+ALTER TABLE flyway_test ADD COLUMN id SERIAL PRIMARY KEY;
