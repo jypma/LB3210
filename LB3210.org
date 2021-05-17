@@ -44,9 +44,14 @@ That means that 63% of the time, at least one service is down somewhere.
 - Be aware of your resource usage (dashboard! More on that later.)
 - Use =Bulkhead= where applicable
 *** Bulkhead
-Semaphore with an optional timed queue in front
+A single resource pool is covering multiple types of application requests
 
-Picture here
+[[file:graphics/svg/without_bulkhead.png]]
+*** Bulkhead in place
+- Semaphore with an optional timed queue in front
+- Other parts of the resource pool are still accessible
+
+[[file:graphics/svg/with_bulkhead.png]]
 ** Consuming services
 - Design for failure
   * Have methods/functions reflect doing I/O
