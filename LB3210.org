@@ -1,3 +1,5 @@
+#+TITLE: Microservices with Java and Spring Boot
+
 * What's a microservice
 ** Definition
 - micro: Give a definition here
@@ -47,6 +49,7 @@ Picture here
   - Use =Circuit Breaker= where applicable
 - Fail fast
   - =System.exit(1)= is a viable error handler
+- Idempotency for all incoming data
 *** Circuit breaker
 Smart state machine towards 1 backend
 Picture here.
@@ -83,15 +86,57 @@ Full-text search is often important when dealing with data.
   - MariaDB: Multiple servers possible with failover
   - RabbitMQ: Multiple servers possible with failover, but failback doesn't work in Spring ([[https://jira.spring.io/browse/AMQP-318][AMQP-318]]) 
 - If you choose these, make failover testing part of your CI
-
+*** RabbitMQ
+- Message queue with focus on performance
+- Original architecture single-server
+  - Later extended with /Mirror Queues/ 
+  - Extended with /Quorum Queues/ in 2019 (raft)
+    * No message TTL, no message priorities
+    * All cluster members have all data
+    * All messages in memory! (in addition to storage)
+*** RabbitMQ Data consistency
+- AMQP "transaction"
+  - Covers only a single queue
+  - "Slow" (fsync for every transaction)
+- /Publisher confirms/
+  - Asynchronous message from RabbitMQ to client (after fsync): =basic.ack= or =basic.nack=
+  - Impossible to predictably deal with lost broker connection (risk duplicate, risk lost messages)
+- Manual /Consumer acknowledgement/
+  - Consumer sends message to RabbitMQ to confirm handling of message is complete
+  - =basic.ack=, =basic.nack(requeue)=, =basic.nack(no requeue)=
+  - This is async, so no guarantee that the server receives it
+(* something something 2 generals)
 ** Monitoring and alerting
 - Logging need not be a cross-cutting concern
 - Create monitored metrics instead
 ** Request tracing
+TODO write about Jaeger and Zipkin
+** Configuration
+- configuration file changes
+  + kubernetes
+  + hot reloading? Not in spring boot (watch file and shutdown instead)
+- environment variables for service injection: don't do it (ordering issues)
+  + use dns instead (e.g. dns-java, akka discovery, [...])
 ** Deployment
 *** Docker
+- Limited to linux in this course
+- Lightweight layer over native cgroups isolation
+- Instant process startup
+*** Docker-compose
+- Groups several docker containers and storage
+- Ideal for local testing
+- TODO show example from demo project
 *** Kubernetes
+- Manages a cluster of distributed docker containers with copies
+- Ideal for production
+- Configure Memory requests and limits
+- Configure CPU requests
+- Get comfortable getting thread and heap dumps
+- Heap dump on out of memory (this /will/ happen)
+  + =-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps= to an =emptyDir= volume
 ** Load balancer
+- TODO write about kubernetes ingres (typically nginx)
+- TODO write about haproxy load balancer (tcp-level)
 * Data architecture
 ** Command query responsibility segregation
 - CQRS: Have two separate data models (and split your API accordingly)
@@ -124,8 +169,9 @@ Full-text search is often important when dealing with data.
 - Replicate user memberships through event sourcing
 - Synchronous calls least favourable choice
 * Software architecture
-** Sprint Boot introduction
-Intro here, present some useful abstractions (kafka?). Present plain Java libraries for some of the data stores.
+** Spring Boot introduction
+Intro here, present some useful abstractions (kafka?). Lots of "sensible defaults" (or "magic mystery"). Infrastructure beans
+Present plain Java libraries for some of the data stores.
 ** Annotation vs. functional style
  - Spring annotation style vs. functional style (e.g. [[https://www.exoscale.com/syslog/migrate-from-hystrix-to-resilience4j/][vavr and resiliance4j]]. JOOQ defaults to lambda transactions as well.)
    - Disadvantages of annotations: Discoverability, Composability, Testability
@@ -134,7 +180,24 @@ Intro here, present some useful abstractions (kafka?). Present plain Java librar
 ** Useful modern Java features
 - Lambdas (Java 8)
 - Records (Java 14)
+  + JOOQ was [[https://github.com/jOOQ/jOOQ/issues/10287][just]] updated with record support for POJOs (for 3.15.0)
 - Type-inferrerred variables (Java 11)
+** Functional programming and immutability: VAVR
+TODO describe VAVR, with code
+** Relational databases
+*** Migration management: Flyway
+TODO describe Flyway, link to code
+*** Interacting with data: JOOQ
+TODO describe JOOQ, link to code
+** RabbitMQ
+TODO make some code
+*** Spring Boot RabbitMQ
+- Doesn't wait for publisher confirms by default
+- Can't fail application if RabbitMQ is/goes down
+- Consume messages: =@RabbitListener=
+  - Automatically sends =basic:ack= after method returns, or =basic:nack= 
+TODO link to code
+- Produce messages
 * Micro service life cycle
 ** Development
 Which dependencies to mock, which to run
@@ -165,6 +228,11 @@ Infrastructure as code
 - However, "infra tooling" or "platform" team can be helpful
 * Getting your service used
 ** Public REST API 
+- RAML vs OpenAPI
+  - RAML more advanced, easier to write by hand
+  - OpenAPI more tooling support
+- Role of an XSD in a an XML API 
+- Create JSON schemas for everything
 ** Public developer guide
 ** Public service dashboard
 ** Stay away from API gateways
@@ -173,3 +241,4 @@ Infrastructure as code
 https://world.hey.com/joaoqalves/disasters-i-ve-seen-in-a-microservices-world-a9137a51
 https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
 
+* Notes
