@@ -2,8 +2,13 @@
 
 * What's a microservice
 ** Definition
-- micro: Give a definition here
-- service: Give a definition here
+- /Service/
+  * One operating system process (often on its own server)
+  * Exposes an API (sometimes also a UI)
+- /Micro/
+  * Theory: It's small
+  * Practice: There are many
+  * Independently deployable
 ** Philosophy
 - Business needs evolve
 - Team composition changes
@@ -40,6 +45,7 @@ That means that 63% of the time, at least one service is down somewhere.
 - Use =Bulkhead= where applicable
 *** Bulkhead
 Semaphore with an optional timed queue in front
+
 Picture here
 ** Consuming services
 - Design for failure
