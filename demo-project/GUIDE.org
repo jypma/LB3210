@@ -1,0 +1,146 @@
+#+TITLE: Demo project development guide
+#+PROPERTY: header-args:elisp :results silent
+
+* COMMENT Document maintainance (not presented)
+** COMMENT Remove all results
+#+BEGIN_SRC elisp 
+(org-babel-remove-result-one-or-many t)
+#+END_SRC
+
+
+* Introduction
+Let's take a tour through our =demo-project=, looking at both the API and the spring boot internals.
+
+* API
+** Saying hello
+The application exposes a REST API on port 8080 when run. Let's first investigate the root.
+
+#+BEGIN_SRC restclient
+GET http://localhost:8080
+#+END_SRC
+
+** Listing objects
+Well, nothing is deployed on the root. Let's see if we can list objects instead.
+
+#+BEGIN_SRC restclient
+GET http://localhost:8080/values
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC js
+[
+  {
+    "key": "foo",
+    "value": "newvalue",
+    "id": 1
+  },
+  {
+    "key": "foo",
+    "value": "bar",
+    "id": 2
+  },
+  {
+    "key": "foo",
+    "value": "bar",
+    "id": 3
+  },
+  {
+    "key": "foo",
+    "value": "bar",
+    "id": 4
+  }
+]
+// GET http://localhost:8080/values
+// HTTP/1.1 200 
+// Content-Type: application/json
+// Transfer-Encoding: chunked
+// Date: Wed, 12 May 2021 11:39:40 GMT
+// Keep-Alive: timeout=60
+// Connection: keep-alive
+// Request duration: 0.299785s
+#+END_SRC
+
+** Creating an object
+We can create an object by sending a =POST= request with some JSON.
+#+BEGIN_SRC restclient
+POST http://localhost:8080/values
+Content-Type: application/json
+
+{
+  "key": "foo",
+  "value": "bar",
+}
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC js
+{
+  "key": "foo",
+  "value": "bar",
+  "id": 3
+}
+// POST http://localhost:8080/values
+// HTTP/1.1 201 
+// Location: http://localhost:8080/values/3
+// Content-Type: application/json
+// Transfer-Encoding: chunked
+// Date: Wed, 12 May 2021 10:38:08 GMT
+// Keep-Alive: timeout=60
+// Connection: keep-alive
+// Request duration: 0.189889s
+#+END_SRC
+*** ID is created by the service
+When using  =POST= to create, we can't pick our own ID:
+We can create an object by sending a =POST= request with some JSON.
+#+BEGIN_SRC restclient
+POST http://localhost:8080/values
+Content-Type: application/json
+
+{
+  "key": "foo",
+  "value": "bar",
+  "id": 1
+}
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC js
+{
+  "key": "foo",
+  "value": "bar",
+  "id": 4
+}
+// POST http://localhost:8080/values
+// HTTP/1.1 201 
+// Location: http://localhost:8080/values/4
+// Content-Type: application/json
+// Transfer-Encoding: chunked
+// Date: Wed, 12 May 2021 10:39:35 GMT
+// Keep-Alive: timeout=60
+// Connection: keep-alive
+// Request duration: 0.016180s
+#+END_SRC
+
+** Updating an object
+In case we change out mind, we can =PUT= an update to the object, on the URI we got back for its creation (in the =Location= header).
+
+#+BEGIN_SRC restclient
+PUT http://localhost:8080/values/1
+Content-Type: application/json
+
+{
+  "key": "foo",
+  "value": "newvalue"
+}
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC js
+// PUT http://localhost:8080/values/1
+// HTTP/1.1 204 
+// Date: Wed, 12 May 2021 11:10:58 GMT
+// Keep-Alive: timeout=60
+// Connection: keep-alive
+// Request duration: 0.167273s
+#+END_SRC
+
