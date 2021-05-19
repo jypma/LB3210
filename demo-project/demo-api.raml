@@ -1,0 +1,88 @@
+#%RAML 1.0
+---
+title: Demo API
+baseUri: http://localhost:8080/
+
+/values:
+    get:
+      description: "Retrieve an array of value entries"
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                [
+                    {
+                        "key": "k01",
+                        "value": "some value",
+                        "id": 1
+                    },
+                    {
+                        "key": "k02",
+                        "value": "another value",
+                        "id": 2
+                    }
+                ]
+    post:
+        description: "Create a new value entry"
+        body:
+          application/json:
+            type: value
+            example: |
+              {
+                  "key": "k0",
+                  "value": "a value",
+                  "id": null
+              }
+        responses:
+          201:
+            body:
+              application/json:
+                  example: |
+                      {
+                        "key": "k0",
+                        "value": "a value",
+                        "id": 1
+                      }
+            headers:
+                  Location:
+                    example: "http://localhost:8080/values/1"
+    /{id}:
+        put:
+            body:
+              application/json:
+                type: value
+                example: |
+                  {
+                      "key": "k0",
+                      "value": "a value",
+                      "id": null
+                  }
+            responses:
+              204:
+                  description: "successful update"
+
+types:
+  value: |
+    {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-03/schema",
+      "id": "http://jsonschema.net",
+      "required": true,
+      "properties": {
+        "key": {
+          "type": "string",
+          "required": true,
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "required": true,
+          "minLength": 1
+        },
+         "id": {
+           "type": ["integer", "null"],
+           "required": false
+         }
+      }
+    }
