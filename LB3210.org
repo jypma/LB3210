@@ -1,4 +1,5 @@
 #+TITLE: Microservices with Java and Spring Boot
+#+PROPERTY: header-args:plantuml :exports results :var _dpi_="150" 
 #+options: H:2
 
 * What's a microservice
@@ -66,8 +67,7 @@ A single resource pool is covering multiple types of application requests
   * /Half-open/: We're allowing a few requests through, to test the waters
 
 #+BEGIN_SRC plantuml :file graphics/circuit-breaker-state.png :hidden
-@startuml
-skinparam dpi 150
+skinparam dpi _dpi_
 hide empty description
 [*] --> Closed
 Closed : passing requests through
@@ -80,13 +80,39 @@ Half_Open : pass some requests through to test availability
 
 Half_Open -> Closed : [failure rate below threshold]
 Half_Open -> Open : [failure rate above threshold]
-@enduml
 #+END_SRC
 
 #+RESULTS:
 [[file:graphics/circuit-breaker-state.png]]
 * Infrastructure architecture
 ** Partitioned data stores
+- All data is split into partitions (also called /shards/), which are copied onto servers
+- For each data element, a /key/ determines which partition it's stored on
+#+BEGIN_SRC plantuml :file graphics/partitioned-data-stores.png :hidden
+skinparam dpi _dpi_
+skinparam linetype ortho
+
+node n1 as "Server 1" {
+  database b1 as "Partition B"
+  database a1 as "Partition A"
+}
+node n2 as "Server 2" {
+  database c2 as "Partition C"
+  database b2 as "Partition B"
+}
+node n3 as "Server 3" {
+  database c3 as "Partition C"
+  database a3 as "Partition A"
+}
+n1 <-right-> n2
+n2 <--> n3
+n1 <--> n3
+
+#+END_SRC
+
+#+RESULTS:
+[[file:graphics/partitioned-data-stores.png]]
+
 *** Partitioned row stores
 Each /row/ has a /key/ that specifies which partition(s) store data for that row. Data is typically stored in columns, following a schema.
 
@@ -112,10 +138,9 @@ Full-text search is often important when dealing with data.
 - Google: Hosted elasticsearch
 - Azure: Hosted elasticsearch
 ** Single-server data stores
-- Avoid these unless specific requirements
-- Many moving parts needed to make master/slave failover work
+- Many moving parts needed to make primary/replica failover work
   * PostgreSQL: Multiple servers possible, but failures leak to the client. =pgBouncer= as alternative.
-  * MariaDB: Multiple servers possible with failover
+  * MariaDB: Multiple servers possible with failover, failback is a manual process
   * RabbitMQ: Multiple servers possible with failover, but failback doesn't work in Spring ([[https://jira.spring.io/browse/AMQP-318][AMQP-318]]) 
 - If you choose these, make failover testing part of your CI
 *** RabbitMQ
@@ -145,6 +170,17 @@ Full-text search is often important when dealing with data.
   * Have metrics on /everything/
   * Dashboard should be visible to and understandable by non-team members
 - Be aware of your resource usage, check all environments at least daily
+*** Protocol variations
+- Push-based (statsd)
+  * Application periodically (10 seconds) sends UDP packet(s) with metrics
+  * Simple text-based wire format
+  * Composes well if running with multiple metrics backends
+  * Advantages: composability, easy to route, less moving parts
+- Pull-based (prometheus)
+  * Database calls into microservice periodically (10 seconds) over HTTP
+  * Service needs to run extra HTTP server
+  * Does not compose (multiple metrics backends need to be known on the prometheus side)
+  * Advantages: less timing-sensitive
 ** Request tracing
 TODO write about Jaeger and Zipkin
 ** Configuration
@@ -302,4 +338,8 @@ https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
 - Need small breakout sessions during the day
 - Quick shootout to https://12factor.net/
 - Export both to beamer and plain PDF
-
+- Immutability, I don't need it?
+  * Caches
+  * Callback APIs
+  * Type sanity
+- Test with external monitor
