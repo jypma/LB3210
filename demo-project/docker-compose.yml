@@ -3,20 +3,31 @@ version: '3.1'
 services:
 
   db:
-    image: postgres:13.2-alpine
-    # Uncomment this to have the DB come up when you start docker / your laptop:
+    # Uncomment this to have the DB come up when you start docker / your laptop,
+    # and add the same tag to all other services in this file.
     #restart: always
+
+    image: postgres:13.2-alpine
     environment:
       POSTGRES_USER: demo
       POSTGRES_DB: demo
       POSTGRES_PASSWORD: example
     ports:
-      - 5432:5432
+      - 5432:5432    # PSQL binary protocol
 
   rabbitmq:
     image: rabbitmq:3.8.16-alpine
-    # Uncomment this to have the DB come up when you start docker / your laptop:
-    #restart: always
     ports:
       - 5672:5672    # AMQP
       - 15672:15672  # Web UI
+
+  grafana:
+    image: grafana/grafana:7.5.7
+    ports:
+      - 3000:3000   # Web UI
+
+  graphite:
+    image: graphiteapp/graphite-statsd:1.1.8-1
+    ports:
+      - 8125:8125/udp   # StatsD
+      - 2004:2004       # Graphite (pickled)

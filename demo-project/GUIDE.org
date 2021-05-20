@@ -144,6 +144,47 @@ Content-Type: application/json
 // Request duration: 0.167273s
 #+END_SRC
 
+* Metrics
+Metrics are activated for Spring Boot by having spring boot's "actuator" module, micrometer, and a micrometer registry present in pom.xml:
+#+BEGIN_SRC xml
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-statsd</artifactId>
+    </dependency>
+#+END_SRC
+Through classpath scanning, Spring will now start outputting metrics in StatsD format to the host and UDP port mentioned in =application.properties= (defaulting to =localhost:8125=).
+** Following along
+On a linux system, you can use =tcpdump= as a simple confirmation that metrics are being sent to the StatsD port. Wireshark will work as well, probably also under other operating systems.
+#+BEGIN_SRC sh
+sudo tcpdump -i lo -t -A -s0 dst port 8125
+#+END_SRC
+
+This will show output something like:
+#+BEGIN_EXAMPLE sh
+system.cpu.count:16|g|#statistic:value
+jdbc.connections.max:10|g|#statistic:value,name:dataSource
+hikaricp.connections.active:0|g|#statistic:value,pool:HikariPool-1
+jvm.memory.max:12165120|g|#statistic:value,area:nonheap,id:CodeHeap 'non-nmethods'
+hikaricp.connections.idle:0|g|#statistic:value,pool:HikariPool-1
+process.start.time:1621501024948|g|#statistic:value
+jvm.buffer.memory.used:0|g|#statistic:value,id:mapped
+jvm.buffer.count:4|g|#statistic:value,id:direct
+jvm.threads.daemon:23|g|#statistic:value
+process.files.max:524288|g|#statistic:value
+jvm.threads.states:0|g|#statistic:value,state:new
+jvm.memory.committed:2555904|g|#statistic:value,area:nonheap,id:CodeHeap 'non-nmethods'
+demo.controller.incoming.size:8|h
+demo.controller.updated:1|c|#statistic:count
+[...]
+#+END_EXAMPLE
 
 * Asynchronous Java
 ** What is async and why?

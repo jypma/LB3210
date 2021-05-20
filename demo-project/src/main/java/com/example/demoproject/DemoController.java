@@ -20,16 +20,28 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+
 @RestController
 public class DemoController {
     private final DSLContext ctx;
     private final Function<Configuration,DemoRepository> repository;
     private final RabbitTemplate template;
+    private final DistributionSummary incomingSize;
+    private final Counter updated;
 
-    public DemoController(Configuration cfg, Function<Configuration,DemoRepository> repository, RabbitTemplate template) {
+    public DemoController(Configuration cfg, Function<Configuration,DemoRepository> repository, RabbitTemplate template, MeterRegistry metrics) {
         this.ctx = DSL.using(cfg);
         this.repository = repository;
         this.template = template;
+        this.incomingSize = DistributionSummary.builder("demo.controller.incoming.size")
+            .description("Size of created or updated items in characters")
+            .register(metrics);
+        this.updated = Counter.builder("demo.controller.updated")
+            .description("Number if received updates")
+            .register(metrics);
     }
 
     /**
@@ -69,6 +81,8 @@ public class DemoController {
 
     @PostMapping("/values")
     public ResponseEntity<?> create(@RequestBody FlywayTest body) {
+        incomingSize.record(body.getValue().length());
+
         var created = inRepoTransaction(r -> r.create(body));
         sendToQueue("Created: " + body);
         var uri = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -84,6 +98,9 @@ public class DemoController {
 
     @PutMapping("/values/{id}")
     public ResponseEntity<?> update(@PathVariable("id") int id, @RequestBody FlywayTest body) {
+        incomingSize.record(body.getValue().length());
+        updated.increment();
+
         // Unfortunately, we have to verbosely copy here, since JOOQ hasn't implemented "with" methods
         // See https://github.com/jOOQ/jOOQ/issues/5257 for details.
         var obj = new FlywayTest(body.getKey(), body.getValue(), id);
