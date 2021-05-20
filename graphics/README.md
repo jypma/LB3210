@@ -13,7 +13,7 @@ This project contains graphics and illustrations for the LB3210 course.
    _mvn clean com.github.jmdesprez:plantuml-maven-plugin:generate_
 4. SVG files generated from plant-uml text files can be found in ./target/plantuml
 
+## Generating PNG from SVG files
 
-
-
-
+1. Install Inkscape
+2. Run `./generate.sh`

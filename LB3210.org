@@ -1,28 +1,34 @@
 #+TITLE: Microservices with Java and Spring Boot
+#+PROPERTY: header-args:plantuml :exports results :var _dpi_="150" 
+#+options: H:2
 
 * What's a microservice
 ** Definition
-- micro: Give a definition here
-- service: Give a definition here
+- /Service/
+  * One operating system process (often on its own server)
+  * Exposes an API (sometimes also a UI)
+- /Micro/
+  * Theory: It's small
+  * Practice: There are many
+  * Independently deployable
 ** Philosophy
 - Business needs evolve
 - Team composition changes
-- Services should be disposable (design for replacability *)
-  - Rebuilt in 1-3 months
-
-( * ) instead of design for reuse (DDD book)
+- Services should be disposable (design for replacability)
+  * Rebuilt in 1-3 months
+- Per service, use best technology matching experience and requirements 
 ** Service scope
 - Service belongs to one team
 - Data store belongs to one service
 - Domain driven design
-  - Naming things (resources, REST API)
-  - Bounded Context
-  - Ubiqutous Language
+  * Naming things (resources, REST API)
+  * Bounded Context
+  * Ubiqutous Language
 ** Use cases 
 - Embrace Conway's law: One system belongs to at most one team
-- Monoliths are fine too
-- Time to market and techincal debt vs. holistic design
-
+- Monoliths are fine to start with
+  * Time to market and techincal debt vs. holistic design
+- Strangler pattern
 * Design for resilience
 ** Your (or your colleague's) service will be down
 P(everything working) = P(one service is working) ^ n_services
@@ -33,28 +39,80 @@ Well, we have about 30 microservices, each with 3 copies.
 That means that 63% of the time, at least one service is down somewhere.
 ** Creating services
 - Prefer sharded (partitioned) data stores over single points of failure
+- Idempotency for all incoming data
 - Always deploy more than 1 copy 
-  - Investigate the need for a cluster-aware distributed framework
-- Your service dashboard is as important as your public API
-  - Have metrics on /everything/
-- Be aware of your resource usage (dashboard! More on that later.)
-- Use =Bulkhead= where applicable
+  * Investigate the need for a cluster-aware distributed framework
+- Have a /Service dashboard/ with metrics
+- Use =Bulkhead= to protect finite resources
 *** Bulkhead
-Semaphore with an optional timed queue in front
-Picture here
+A single resource pool is covering multiple types of application requests
+
+[[file:graphics/svg/without_bulkhead.png]]
+*** Bulkhead in place
+- Semaphore with an optional timed queue in front
+- Other parts of the resource pool are still accessible
+
+[[file:graphics/svg/with_bulkhead.png]]
 ** Consuming services
 - Design for failure
-  - Have methods/functions reflect doing I/O
-  - Make time (and timeouts) explicit
-  - Use =Circuit Breaker= where applicable
+  * Have methods/functions reflect doing I/O
+  * Make time (and timeouts) explicit
+  * Use =Circuit Breaker= where applicable
 - Fail fast
-  - =System.exit(1)= is a viable error handler
-- Idempotency for all incoming data
+  * =System.exit(1)= is a viable error handler
 *** Circuit breaker
-Smart state machine towards 1 backend
-Picture here.
+- Smart state machine towards 1 backend
+  * /Closed/: Everything is working normally
+  * /Open/: We've determined that the backend is down, and block requests
+  * /Half-open/: We're allowing a few requests through, to test the waters
+
+#+BEGIN_SRC plantuml :file graphics/circuit-breaker-state.png :hidden
+skinparam dpi _dpi_
+hide empty description
+[*] --> Closed
+Closed : passing requests through
+
+Closed -> Open : [failure rate above threshold]
+Open : blocking requests
+
+Open -> Half_Open : [after wait duration]
+Half_Open : pass some requests through to test availability
+
+Half_Open -> Closed : [failure rate below threshold]
+Half_Open -> Open : [failure rate above threshold]
+#+END_SRC
+
+#+RESULTS:
+[[file:graphics/circuit-breaker-state.png]]
 * Infrastructure architecture
 ** Partitioned data stores
+- All data is split into partitions (also called /shards/), which are copied onto servers
+- For each data element, a /key/ determines which partition it's stored on
+#+BEGIN_SRC plantuml :file graphics/partitioned-data-stores.png :hidden
+skinparam dpi _dpi_
+skinparam linetype ortho
+
+node n1 as "Server 1" {
+  database b1 as "Partition B"
+  database a1 as "Partition A"
+}
+node n2 as "Server 2" {
+  database c2 as "Partition C"
+  database b2 as "Partition B"
+}
+node n3 as "Server 3" {
+  database c3 as "Partition C"
+  database a3 as "Partition A"
+}
+n1 <-right-> n2
+n2 <--> n3
+n1 <--> n3
+
+#+END_SRC
+
+#+RESULTS:
+[[file:graphics/partitioned-data-stores.png]]
+
 *** Partitioned row stores
 Each /row/ has a /key/ that specifies which partition(s) store data for that row. Data is typically stored in columns, following a schema.
 
@@ -80,43 +138,57 @@ Full-text search is often important when dealing with data.
 - Google: Hosted elasticsearch
 - Azure: Hosted elasticsearch
 ** Single-server data stores
-- Avoid these unless specific requirements
-- Many moving parts needed to make master/slave failover work
-  - PostgreSQL: Multiple servers possible, but failures leak to the client. =pgBouncer= as alternative.
-  - MariaDB: Multiple servers possible with failover
-  - RabbitMQ: Multiple servers possible with failover, but failback doesn't work in Spring ([[https://jira.spring.io/browse/AMQP-318][AMQP-318]]) 
+- Many moving parts needed to make primary/replica failover work
+  * PostgreSQL: Multiple servers possible, but failures leak to the client. =pgBouncer= as alternative.
+  * MariaDB: Multiple servers possible with failover, failback is a manual process
+  * RabbitMQ: Multiple servers possible with failover, but failback doesn't work in Spring ([[https://jira.spring.io/browse/AMQP-318][AMQP-318]]) 
 - If you choose these, make failover testing part of your CI
 *** RabbitMQ
 - Message queue with focus on performance
 - Original architecture single-server
-  - Later extended with /Mirror Queues/ 
-  - Extended with /Quorum Queues/ in 2019 (raft)
-    * No message TTL, no message priorities
-    * All cluster members have all data
-    * All messages in memory! (in addition to storage)
+  * Later extended with /Mirror Queues/ (primary/replica)
+  * Extended with /Quorum Queues/ in 2019 (raft)
+    + No message TTL, no message priorities
+    + All cluster members have all data
+    + All messages in memory! (in addition to storage)
 *** RabbitMQ Data consistency
 - AMQP "transaction"
-  - Covers only a single queue
-  - "Slow" (fsync for every transaction)
+  * Covers only a single queue
+  * "Slow" (fsync for every transaction)
 - /Publisher confirms/
-  - Asynchronous message from RabbitMQ to client (after fsync): =basic.ack= or =basic.nack=
-  - Impossible to predictably deal with lost broker connection (risk duplicate, risk lost messages)
+  * Asynchronous message from RabbitMQ to client (after fsync): =basic.ack= or =basic.nack=
+  * Impossible to predictably deal with lost broker connection (risk duplicate, risk lost messages)
 - Manual /Consumer acknowledgement/
-  - Consumer sends message to RabbitMQ to confirm handling of message is complete
-  - =basic.ack=, =basic.nack(requeue)=, =basic.nack(no requeue)=
-  - This is async, so no guarantee that the server receives it
+  * Consumer sends message to RabbitMQ to confirm handling of message is complete
+  * =basic.ack=, =basic.nack(requeue)=, =basic.nack(no requeue)=
+  * This is async, so no guarantee that the server receives it
 (* something something 2 generals)
 ** Monitoring and alerting
 - Logging need not be a cross-cutting concern
-- Create monitored metrics instead
+  * Create monitored metrics instead
+- Your service dashboard is as important as your public API
+  * Have metrics on /everything/
+  * Dashboard should be visible to and understandable by non-team members
+- Be aware of your resource usage, check all environments at least daily
+*** Protocol variations
+- Push-based (statsd)
+  * Application periodically (10 seconds) sends UDP packet(s) with metrics
+  * Simple text-based wire format
+  * Composes well if running with multiple metrics backends
+  * Advantages: composability, easy to route, less moving parts
+- Pull-based (prometheus)
+  * Database calls into microservice periodically (10 seconds) over HTTP
+  * Service needs to run extra HTTP server
+  * Does not compose (multiple metrics backends need to be known on the prometheus side)
+  * Advantages: less timing-sensitive
 ** Request tracing
 TODO write about Jaeger and Zipkin
 ** Configuration
 - configuration file changes
-  + kubernetes
-  + hot reloading? Not in spring boot (watch file and shutdown instead)
+  * kubernetes
+  * hot reloading? Not in spring boot (watch file and shutdown instead)
 - environment variables for service injection: don't do it (ordering issues)
-  + use dns instead (e.g. dns-java, akka discovery, [...])
+  * use dns instead (e.g. dns-java, akka discovery, [...])
 ** Deployment
 *** Docker
 - Limited to linux in this course
@@ -133,32 +205,32 @@ TODO write about Jaeger and Zipkin
 - Configure CPU requests
 - Get comfortable getting thread and heap dumps
 - Heap dump on out of memory (this /will/ happen)
-  + =-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps= to an =emptyDir= volume
+  * =-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps= to an =emptyDir= volume
 ** Load balancer
 - TODO write about kubernetes ingres (typically nginx)
 - TODO write about haproxy load balancer (tcp-level)
 * Data architecture
 ** Command query responsibility segregation
 - CQRS: Have two separate data models (and split your API accordingly)
-  - A /command/ model, for API calls that only change data (and do not return data)
-  - A /query/ model, for API calls that only return data (and do not change data)
+  * A /command/ model, for API calls that only change data (and do not return data)
+  * A /query/ model, for API calls that only return data (and do not change data)
 
 - Builds on CQS (Command query separation). One method can only do one of two things:
-  - Perform a /command/, by having side effects (and not returning a value)
-  - Perform a /query/, returning a value (and not having side effects)
+  * Perform a /command/, by having side effects (and not returning a value)
+  * Perform a /query/, returning a value (and not having side effects)
 
 ** Event sourcing
  - Actual event sourcing (shared data store, materialized view into relational DB or Elasticsearch)
-   - Event journal part of API?
+   * Event journal part of API?
 
 ** Pitfalls
 - Service codependencies
-  - Keep HTTP calls one way only
-  - Plugin pattern
+  * Keep HTTP calls one way only
+  * Plugin pattern
 - Nested synchronous service calls
-  - Added latency and failure possiblity
-  - Avoid these with event sourcing
-  - Replicate data instead, or call asynchronously when possible
+  * Added latency and failure possiblity
+  * Avoid these with event sourcing
+  * Replicate data instead, or call asynchronously when possible
 * Security architecture
 ** Service-to-service authentication
 - Mutual TLS
@@ -173,14 +245,14 @@ TODO write about Jaeger and Zipkin
 Intro here, present some useful abstractions (kafka?). Lots of "sensible defaults" (or "magic mystery"). Infrastructure beans
 Present plain Java libraries for some of the data stores.
 ** Annotation vs. functional style
- - Spring annotation style vs. functional style (e.g. [[https://www.exoscale.com/syslog/migrate-from-hystrix-to-resilience4j/][vavr and resiliance4j]]. JOOQ defaults to lambda transactions as well.)
-   - Disadvantages of annotations: Discoverability, Composability, Testability
- - Show MVC annotations vs. akka-http lambdas
- - Resiliance4j also has [[https://resilience4j.readme.io/docs/getting-started-3][spring wrappers]]
+- Spring annotation style vs. functional style (e.g. [[https://www.exoscale.com/syslog/migrate-from-hystrix-to-resilience4j/][vavr and resiliance4j]]. JOOQ defaults to lambda transactions as well.)
+   * Disadvantages of annotations: Discoverability, Composability, Testability
+- Show MVC annotations vs. akka-http lambdas
+- Resiliance4j also has [[https://resilience4j.readme.io/docs/getting-started-3][spring wrappers]]
 ** Useful modern Java features
 - Lambdas (Java 8)
 - Records (Java 14)
-  + JOOQ was [[https://github.com/jOOQ/jOOQ/issues/10287][just]] updated with record support for POJOs (for 3.15.0)
+  * JOOQ was [[https://github.com/jOOQ/jOOQ/issues/10287][just]] updated with record support for POJOs (for 3.15.0)
 - Type-inferrerred variables (Java 11)
 ** Functional programming and immutability: VAVR
 TODO describe VAVR, with code
@@ -195,7 +267,7 @@ TODO make some code
 - Doesn't wait for publisher confirms by default
 - Can't fail application if RabbitMQ is/goes down
 - Consume messages: =@RabbitListener=
-  - Automatically sends =basic:ack= after method returns, or =basic:nack= 
+  * Automatically sends =basic:ack= after method returns, or =basic:nack= 
 TODO link to code
 - Produce messages
 * Micro service life cycle
@@ -217,7 +289,7 @@ Infrastructure as code
 - Team visibility
 - Stakeholder support
 - Team(s) in same time zone as stakeholders (which includes users)
-  - Distributed users? distributed team!
+  * Distributed users? distributed team!
 ** Migrating your monolith
 - Chainsaw anti-pattern
 - Strangler pattern
@@ -229,16 +301,45 @@ Infrastructure as code
 * Getting your service used
 ** Public REST API 
 - RAML vs OpenAPI
-  - RAML more advanced, easier to write by hand
-  - OpenAPI more tooling support
+  * RAML more advanced, easier to write by hand
+  * OpenAPI more tooling support
 - Role of an XSD in a an XML API 
 - Create JSON schemas for everything
 ** Public developer guide
 ** Public service dashboard
 ** Stay away from API gateways
 
+* Assignment A
+- Target: individual developer, or developers that have worked on the same monolith.
+** Part one: architectural description [4 hours]
+- Pick a recent project where you have worked on a /monolith/. The bigger the better.
+- Create a (rough) sketch that depicts the monolith the most important other systems it communicates with
+  * Include both clients and dependencies
+  * Include data stores and queues
+  * Include cloud-based services
+  * For each interface, describe (generally) which protocol or format is used, how often it's used, and the size of messages
+- Create a (rough) sketch that depicts the monolith, its internal structure, and the team(s) changing those parts
+  * Try to include the size of teams and how often they perform changes
+- Create a (rough) timeline that shows how a typical new feature finds its way from inception to being in production
+  * Include testing in various contexts, customer meetings, and other forms of feedback
+** Part two: microservice design
+- Using the techniques from this course, draw a set of candidate microservices that can take over part(s) of the monolith
+- 
+* Assignment B
+- Target: individual developer, or developers that have been on a green-field project together.
+** Part one: architectural description [1 hour]
+** Part two: non-functional extensions
+
 * Interesting links
 https://world.hey.com/joaoqalves/disasters-i-ve-seen-in-a-microservices-world-a9137a51
 https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
 
 * Notes
+- Need small breakout sessions during the day
+- Quick shootout to https://12factor.net/
+- Export both to beamer and plain PDF
+- Immutability, I don't need it?
+  * Caches
+  * Callback APIs
+  * Type sanity
+- Test with external monitor
