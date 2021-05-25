@@ -1,6 +1,11 @@
 # About this repository
 
-This contains the Lund & Bendsen course on Microservices, Java edition
+This contains the Lund & Bendsen course on Microservices, Java edition.
+
+Everything in this repository is covered under the
+[Creative Commons Attribution-ShareAlike 4.0 International License][http://creativecommons.org/licenses/by-sa/4.0/].
+
+In addition, the repository's source code (everything under `demo-project`) is licensed under the [MIT License](https://mit-license.org/).
 
 # Viewing slides
 
