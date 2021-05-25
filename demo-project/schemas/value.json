@@ -1,0 +1,36 @@
+{
+  "id": "value.json",
+  "title": "Value schema",
+  "definitions": {
+    "value": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ]
+    }
+  }
+}
+
+
+
+
+
+
+

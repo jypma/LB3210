@@ -1,0 +1,61 @@
+#%RAML 1.0
+---
+title: Demo API
+baseUri: http://localhost:8080/
+
+types:
+  Value: !include ./schemas/value.json
+  Values: !include ./schemas/values.json
+
+/values:
+    get:
+      description: "returns all values currently stored by the service"
+      responses:
+        200:
+          body:
+            application/json:
+              type: Values
+              example: |
+                [{
+                  "key": "k0",
+                  "value": "a value",
+                  "id": 1
+                },
+                {
+                  "key": "k1",
+                  "value": "another value",
+                  "id": 2
+                }]
+
+    post:
+        description: "creates a new value, and returns its ID"
+        body:
+          application/json:
+            type: Value
+            example: |
+              {
+                "key": "key-0",
+                "value": "a value"
+              }
+        responses:
+          201:
+            body:
+              application/json:
+                type: Value
+            headers:
+              Location:
+                example: "http://localhost:8080/values/1"
+    /{id}:
+        put:
+            description: "updates an existing value"
+            body:
+              application/json:
+                type: Value
+                example: |
+                  {
+                    "key": "key-0",
+                    "value": "a value"
+                  }
+            responses:
+              204:
+                  description: "successful update"
