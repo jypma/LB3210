@@ -618,6 +618,92 @@ public record Rectangle(float length, float width) {
 - Ideal for data classes, and perhaps domain model
 - Expect JSON and XML code generators to pick these up
   * JOOQ was [[https://github.com/jOOQ/jOOQ/issues/10287][recently]] updated with =record= support for POJOs (for 3.15.0)
+** Relational databases
+*** Migration management
+- Relational databases change, just like code
+
+- Change management processes in the wild
+  * Schema changes just aren't allowed
+  * Schema changes require a paper form, a DBA to sign off, and a 6-month process
+  * Schema changes are done manually, live, on the production database, by a junior dev
+
+- Manage your migrations: =Flyway=
+  * Write incremental changes as scripts
+  * Trace script execution in the database itself
+  * See an [[file:demo-project/src/main/resources/flyway/migrations/V1__createdb.sql][example]]
+*** Interacting with data
+- Several layers of abstraction
+  * Direct JDBC
+  * Spring =JdbcTemplate=: Thin wrapper, helps with resource clean-up
+  * Spring data (/JDBC/ or /JPA/ variants): Automates mapping to/from Java objects
+  * JOOQ: Compiles code from your database schema
+
+- Remember databases are allowed to change?
+  * Let's use the compiler to our advantage
+*** Introducing JOOQ
+Given the following table:
+#+BEGIN_SRC sql
+CREATE TABLE entry (
+  id SERIAL PRIMARY KEY,
+  key VARCHAR(64),
+  value VARCHAR(255)
+);
+#+END_SRC
+
+JOOQ will allow you to write code like:
+
+#+BEGIN_SRC java
+ctx.selectFrom(ENTRY).orderBy(ENTRY.ID).fetchInto(Entry.class)
+#+END_SRC
+
+- Type-safe table and column definitions
+- Automatic mapping into generated class
+- Compile errors when you remove/change columns in your schema
+** RabbitMQ
+*** Spring Boot RabbitMQ
+- Just adding the maven dependency is enough
+#+BEGIN_SRC xml
+<dependency>
+  <groupId>org.springframework.amqp</groupId>
+  <artifactId>spring-rabbit</artifactId>
+</dependency>
+#+END_SRC
+
+- Will look for rabbitMQ locally on the default port
+- Can't fail application if RabbitMQ is/goes down
+*** Spring Boot: Read from queue
+- We use (surprise!) an annotation to read from a queue
+#+BEGIN_SRC java
+@Component
+public class MyComponent {
+    @RabbitListener(queues = "demoQueue")
+    public void handle(String message) {
+        // ...
+    }
+}
+#+END_SRC
+- Spring will send a consumer =ack= when, and if, method returns normally
+- Exceptions will cause a =nack= with redelivery (except for some specific cases)
+*** Spring boot: Send to queue
+- Using /Publisher Confirms/ is not the default (or easy) in Spring Boot
+  * "Fire and forget" is the default
+
+- Enable in configuration
+#+BEGIN_SRC conf
+spring.rabbitmq.publisher-confirm-type=simple
+#+END_SRC
+
+- Wrap your message sending code in a lambda
+#+BEGIN_SRC java
+template.invoke(cb -> {
+    cb.convertAndSend("demoQueue", message);
+
+    // Potentially we can do other things in between sending the message and awaiting
+    // its conformation.
+
+    cb.waitForConfirmsOrDie(1000);
+});
+#+END_SRC
 ** Functional programming
 *** Lambdas as control constructs
 - Lambdas are ideal to cover large code blocks
@@ -787,56 +873,6 @@ Route route = path("users", () ->
 );
 #+END_SRC
 
-** Relational databases
-*** Migration management
-- Relational databases change, just like code
-
-- Change management processes in the wild
-  * Schema changes just aren't allowed
-  * Schema changes require a paper form, a DBA to sign off, and a 6-month process
-  * Schema changes are done manually, live, on the production database, by a junior dev
-
-- Manage your migrations: =Flyway=
-  * Write incremental changes as scripts
-  * Trace script execution in the database itself
-  * See an [[file:demo-project/src/main/resources/flyway/migrations/V1__createdb.sql][example]]
-*** Interacting with data
-- Several layers of abstraction
-  * Direct JDBC
-  * Spring =JdbcTemplate=: Thin wrapper, helps with resource clean-up
-  * Spring data (/JDBC/ or /JPA/ variants): Automates mapping to/from Java objects
-  * JOOQ: Compiles code from your database schema
-
-- Remember databases are allowed to change?
-  * Let's use the compiler to our advantage
-*** Introducing JOOQ
-Given the following table:
-#+BEGIN_SRC sql
-CREATE TABLE entry (
-  id SERIAL PRIMARY KEY,
-  key VARCHAR(64),
-  value VARCHAR(255)
-);
-#+END_SRC
-
-JOOQ will allow you to write code like:
-
-#+BEGIN_SRC java
-ctx.selectFrom(ENTRY).orderBy(ENTRY.ID).fetchInto(Entry.class)
-#+END_SRC
-
-- Type-safe table and column definitions
-- Automatic mapping into generated class
-- Compile errors when you remove/change columns in your schema
-** TODO RabbitMQ
- TODO make some code
-*** TODO Spring Boot RabbitMQ
-- Doesn't wait for publisher confirms by default
-- Can't fail application if RabbitMQ is/goes down
-- Consume messages: =@RabbitListener=
-  * Automatically sends =basic:ack= after method returns, or =basic:nack= 
-TODO link to code
-- Produce messages
 ** TODO Streams
 - Java streams is not it
 - Use slides of future vs. callbacks vs. streams
