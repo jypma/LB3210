@@ -2,6 +2,52 @@
 #+PROPERTY: header-args:plantuml :exports results :var _dpi_="150" 
 #+options: H:2
 
+* Schedule
+** Day 1
+|  Time | Duration | Activity                                                  |
+|-------+----------+-----------------------------------------------------------|
+| 13:00 |    00:10 | Welcome, Outline/Agenda                                   |
+| 13:10 |    00:20 | Round table introductions                                 |
+| 13:30 |    00:20 | What's a microservice                                     |
+| 13:50 |    00:20 | Design for resilience                                     |
+|-------+----------+-----------------------------------------------------------|
+| 14:10 |    00:20 | Break(out) 1: Identify services & resilience (or lack of) |
+|-------+----------+-----------------------------------------------------------|
+| 14:30 |    00:15 | Round table identified services exchange                  |
+| 14:45 |    00:45 | Infrastructure architecture                               |
+|-------+----------+-----------------------------------------------------------|
+| 15:30 |    00:20 | Break(out) 2: Checkout, install and run demo-project      |
+|-------+----------+-----------------------------------------------------------|
+| 15:50 |    00:30 | Data architecture                                         |
+| 16:20 |    00:10 | Security architecture                                     |
+| 16:30 |    00:30 | Software architecture                                     |
+| 17:00 |    00:15 | GUIDE: Introduction, API, Metrics                         |
+|-------+----------+-----------------------------------------------------------|
+| 17:15 |    00:55 | Break(out) 3: Food (?), Extend demo-project with (???)    |
+|-------+----------+-----------------------------------------------------------|
+| 18:10 |    00:30 | Presentation(s) of extended demo project                  |
+| 18:40 |    00:20 | Homework, Wrap-up, reserved time for extra subjects       |
+|-------+----------+-----------------------------------------------------------|
+#+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
+
+** Day 2
+|  Time | Duration | Activity                                     |
+|-------+----------+----------------------------------------------|
+| 13:00 |    00:10 | Welcome, Outline/Agenda                      |
+| 13:10 |    00:40 | Homework presentations (6 teams, 5 min each) |
+| 13:50 |    00:10 | Recap of day 1                               |
+|-------+----------+----------------------------------------------|
+| 14:00 |    00:05 | Break                                        |
+|-------+----------+----------------------------------------------|
+| 14:05 |    00:30 | Strategy and team dynamics                   |
+| 14:35 |    00:30 | Getting your service used                    |
+| 15:05 |          |                                              |
+#+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
+
+* Talk about yourself
+- My Background
+- What do I hope to get out of the course
+- What's the smallest service I've ever written
 * What's a microservice
 ** Definition
 - /Service/
@@ -14,20 +60,18 @@
 ** Philosophy
 - Business needs evolve
 - Team composition changes
-- Services should be disposable (design for replacability)
+- Services should be disposable (design to be replaceable)
   * Rebuilt in 1-3 months
 - Per service, use best technology matching experience and requirements 
 ** Service scope
 - Service belongs to one team
+  * Team is responsible for entire service software life cycle
 - Data store belongs to one service
-- Domain driven design
-  * Naming things (resources, REST API)
-  * Bounded Context
-  * Ubiqutous Language
+- Independently deployable
 ** Use cases 
 - Embrace Conway's law: One system belongs to at most one team
 - Monoliths are fine to start with
-  * Time to market and techincal debt vs. holistic design
+  * Time to market and technical debt vs. holistic design
 - Strangler pattern
 * Design for resilience
 ** Your (or your colleague's) service will be down
@@ -84,7 +128,28 @@ Half_Open -> Open : [failure rate above threshold]
 
 #+RESULTS:
 [[file:graphics/circuit-breaker-state.png]]
+** Need more inspiration?
+- The twelve-factor app, [[https://12factor.net/][https://12factor.net/]]
+- Provides sensible suggestions on a lot of topics
+  * Port binding, dev/prod differences, admin processes
+- Not the only way (geared towards ruby/python), but worth a thorough read
+** Microservice pitfalls
+- Service co-dependencies
+  * Keep HTTP calls one way only
+  * Plugin pattern
+- Nested synchronous service calls
+  * Added latency and failure possibility
+  * Avoid these with event sourcing
+  * Replicate data instead, or call asynchronously when possible
+
 * Infrastructure architecture
+** Get familiar with linux
+- Micro services are a linux world
+- It's easier than ever to get started
+  * WSL 2 (some integration, less "linux", and has [[https://www.polv.cc/post/2020/11/wsl-vs-virtualbox][issues]])
+  * VirtualBox with e.g. Ubuntu (real linux)
+  * Dual boot e.g. Ubuntu
+  * Just get a Raspberry Pi
 ** Partitioned data stores
 - All data is split into partitions (also called /shards/), which are copied onto servers
 - For each data element, a /key/ determines which partition it's stored on
@@ -129,7 +194,7 @@ Messages typically small (some services have upper limit of 64kB).
 - Google: Cloud Pub/Sub
 - Azure: Storage Queue ( * ) , Service Bus ( * )
 
-( * ) /not paritioned, size-limited/
+( * ) /not partitioned, size-limited/
 *** Partitioned search
 Full-text search is often important when dealing with data.
 
@@ -140,8 +205,8 @@ Full-text search is often important when dealing with data.
 ** Single-server data stores
 - Many moving parts needed to make primary/replica failover work
   * PostgreSQL: Multiple servers possible, but failures leak to the client. =pgBouncer= as alternative.
-  * MariaDB: Multiple servers possible with failover, failback is a manual process
-  * RabbitMQ: Multiple servers possible with failover, but failback doesn't work in Spring ([[https://jira.spring.io/browse/AMQP-318][AMQP-318]]) 
+  * MariaDB: Multiple servers possible with failover, fail-back is a manual process
+  * RabbitMQ: Multiple servers possible with failover, but fail-back doesn't work in Spring ([[https://jira.spring.io/browse/AMQP-318][AMQP-318]]) 
 - If you choose these, make failover testing part of your CI
 *** RabbitMQ
 - Message queue with focus on performance
@@ -162,7 +227,7 @@ Full-text search is often important when dealing with data.
   * Consumer sends message to RabbitMQ to confirm handling of message is complete
   * =basic.ack=, =basic.nack(requeue)=, =basic.nack(no requeue)=
   * This is async, so no guarantee that the server receives it
-(* something something 2 generals)
+    + Two generals agree
 ** Monitoring and alerting
 - Logging need not be a cross-cutting concern
   * Create monitored metrics instead
@@ -181,35 +246,146 @@ Full-text search is often important when dealing with data.
   * Service needs to run extra HTTP server
   * Does not compose (multiple metrics backends need to be known on the prometheus side)
   * Advantages: less timing-sensitive
-** Request tracing
+*** Metrics terminology
+- Different frameworks use different terms
+- [[https://micrometer.io/][Micrometer]] uses the following:
+  * /Counter/ (sometimes called /event/): An occurrence of a discrete event
+    + e.g. a request coming in
+  * /Gauge/: The size of a single measurable quantity (and its unit)
+    + e.g. the number of active TCP connections
+  * /Timer/: The duration of an activity
+    + e.g. the response time to a request
+  * /Distribution summary/ (sometimes called /histogram/ or even /gauge/): Recorded values (and units) that go with events
+    + e.g. the size of incoming requests in bytes
+** TODO Request tracing
 TODO write about Jaeger and Zipkin
-** Configuration
-- configuration file changes
-  * kubernetes
-  * hot reloading? Not in spring boot (watch file and shutdown instead)
-- environment variables for service injection: don't do it (ordering issues)
-  * use dns instead (e.g. dns-java, akka discovery, [...])
 ** Deployment
+*** Virtualization and containerization
+- First, there was plain hardware
+- VM abstraction
+  * Decoupling of multiple roles of one server
+  * Memory and disk overhead
+  * Linux optimizations (kernel shared memory)
+- Linux can do many of this natively
+  * /Namespaces/: Hide processes from each other
+  * /Cgroups/: Limit resource usage
+- Containers to make it fast and efficient
+  * VM: GBs
+  * Docker (ubuntu): 100's of MB
+  * Docker (alpine): MBs
+  * Instant startup
 *** Docker
 - Limited to linux in this course
 - Lightweight layer over native cgroups isolation
-- Instant process startup
+
+- Dockerfile
+#+BEGIN_SRC dockerfile
+FROM node:12-alpine
+RUN apk add --no-cache python g++ make
+WORKDIR /app
+COPY . .
+RUN yarn install --production
+CMD ["node", "src/index.js"]
+#+END_SRC
+  * Layers
+  * Volumes
+    + Handling of persistent data
+  * Port mapping
+
+- User mapping
+- Don't run as root
 *** Docker-compose
+#+BEGIN_SRC yaml
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres:13.2-alpine
+    # Uncomment this to have the DB come up when you start docker / your laptop:
+    #restart: always
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_DB: demo
+      POSTGRES_PASSWORD: example
+    ports:
+      - 5432:5432
+
+  rabbitmq:
+    image: rabbitmq:3.8.16-alpine
+    # Uncomment this to have the DB come up when you start docker / your laptop:
+    #restart: always
+    ports:
+      - 5672:5672    # AMQP
+      - 15672:15672  # Web UI
+#+END_SRC
+
 - Groups several docker containers and storage
 - Ideal for local testing
-- TODO show example from demo project
 *** Kubernetes
 - Manages a cluster of distributed docker containers with copies
+  * /Pod/: Combination of one or more docker containers and their configuration
+  * /Configmap/: Extra settings for pods, typically becoming a volume in the pod
+  * /Deployment/: Automatic replicas and distributed upgrades for pods (and other resources)
 - Ideal for production
 - Configure Memory requests and limits
 - Configure CPU requests
 - Get comfortable getting thread and heap dumps
 - Heap dump on out of memory (this /will/ happen)
   * =-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps= to an =emptyDir= volume
-** Load balancer
+** Configuration
+- Externalize "magic numbers" and strings
+- Embrace your framework's ability to have /internal/ and /external/ configuration
+  * /Internal/ (inside docker container) has defaults and values that don't really change
+  * /External/ (mounted as a volume) has settings specific for that environment and/or server
+- Changes to configuration files
+  * Kubernetes: Configmap change does /not/ restart the pod
+  * Hot reloading? Not in spring boot (watch file and shutdown instead)
+- Environment variables for secrets: don't do it (leaking to docker, monitoring tools)
+  * use files instead
+- Environment variables for service injection: don't do it (ordering issues)
+  * use dns instead (e.g. dns-java, akka discovery, [...])
+** TODO Load balancer
 - TODO write about kubernetes ingres (typically nginx)
 - TODO write about haproxy load balancer (tcp-level)
 * Data architecture
+** Domain-driven design
+- Software methodology
+  * /Names in code must names used by the business/
+- Popularized in 2003 by [[https://www.dddcommunity.org/book/evans_2003/][Eric Evans]] in his book
+- Simple guideline lead to extremely useful patterns
+- Useful example [[https://www.mirkosertic.de/blog/2013/04/domain-driven-design-example/][here]]
+*** Bounded context
+- Reasoning about complex business processes requires abstractions
+  * A /domain model/ implements these abstractions as code
+- Abstractions, and hence models, have a limited applicability
+- /Bounded context/ makes this explicit
+  * When creating a domain model, evaluate the scope of your design
+  * Create sub-domains when you encounter them
+  * Describe the bounds for your domain
+*** Ubiquitous language 
+- We have a domain model, great!
+- Added value comes from day-to-day conversations
+  * Among developers
+  * Between developers and the customer
+  * Between developers and the user
+- Is everyone speaking the same language?
+
+- /Ubiqutous language/: All team members use important terms in the same way
+  * Within a bounded context
+*** Event storming workshop
+- We need to quickly learn a new domain
+- /Business process modeling/ and /requirements gathering/
+- Bring together /domain experts/ and /developers/
+
+- Discover events that occur in the business, and what triggers them
+  * /Business Event/, e.g. /a customer has applied for a loan/
+  * /Command/, e.g. /create a new loan request/
+  * /Actor/, e.g. /loan requester/
+  * /Aggregate/, e.g. /Loan Application/
+
+- Why do you think the focus is on /Events/, rather than /Aggregates/?
+- Useful example [[https://www.rubiconred.com/blog/event-storming][here]]
 ** Command query responsibility segregation
 - CQRS: Have two separate data models (and split your API accordingly)
   * A /command/ model, for API calls that only change data (and do not return data)
@@ -219,70 +395,473 @@ TODO write about Jaeger and Zipkin
   * Perform a /command/, by having side effects (and not returning a value)
   * Perform a /query/, returning a value (and not having side effects)
 
+- We'll see CQS again
 ** Event sourcing
- - Actual event sourcing (shared data store, materialized view into relational DB or Elasticsearch)
-   * Event journal part of API?
+- Traditional relational database: CRUD
+  * Update in place
+- Change log, shadow table
 
-** Pitfalls
-- Service codependencies
-  * Keep HTTP calls one way only
-  * Plugin pattern
-- Nested synchronous service calls
-  * Added latency and failure possiblity
-  * Avoid these with event sourcing
-  * Replicate data instead, or call asynchronously when possible
+- Turn it upside down: /Event journal/ is the source of truth
+  * Read from the event journal to create your query model
+  * No more CRUD
+  * Read from your event journal again: /full-text search!/
+  * Read from your event journal again: /business analytics!/
+
+- Event journal part of API?
+** Data formats
+*** XML
+#+BEGIN_SRC xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice
+ xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+ xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+ xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+ <cbc:ID>42</cbc:ID>
+ <cbc:IssueDate>2004-05-24</cbc:IssueDate>
+ <cac:LegalMonetaryTotal>
+  <cbc:PayableAmount currencyID="USD">52.00</cbc:PayableAmount>
+ </cac:LegalMonetaryTotal>
+</Invoice>
+#+END_SRC
+
+- Extensible Markup Language
+- Composes very well
+  * Namespaces prevent shadowing
+  * Natural order of tags can be useful
+- /De facto/ schema standard (XSD) has unfortunate limitations
+  * Hard to express "order does not matter"
+  * Hard to express "this schema can be extended with extra tags and attributes"
+  * Alternatives: /schematron/ (alive) and /relax-ng/ (dead?)
+- Still, a very sensible default choice
+*** JSON
+#+BEGIN_SRC js
+{
+  "invoice": {
+    "id": "42",
+    "issueDate": "2004-05-24",
+    "legalMonetaryTotal": {
+      "payableAmount": {
+        "value": "52.00"
+        "currencyID": "USD"
+      }
+    }
+  }
+}
+#+END_SRC
+- /JavaScript Object Notation/
+- Started its life in the web browser (~2000)
+  * XML inconvenient to deal with in Javascript back then (SAX API)
+  * JSON could just be parsed as Javascript directly
+- No namespaces
+  * JSON is useless without context
+- No (useful) types
+  * JavaScript /number/ is a technically a double-precision float (even though in JSON it can contain unlimited digits)
+  * Even [[https://json-schema.org/understanding-json-schema/reference/numeric.html][JSON schema]] does not remedy this
+- No comments
+*** Protobuf
+#+BEGIN_SRC js
+message SearchRequest {
+  required string query = 1;
+  optional int32 page_number = 2;
+  optional int32 result_per_page = 3;
+}
+#+END_SRC
+
+- Very compact binary format
+- Started at Google, today >70 implementations
+- Built with organic versioning in mind
+- Ideal for storing events of event sourcing (if you have a lot of them)
 * Security architecture
-** Service-to-service authentication
-- Mutual TLS
 ** User-to-service authentication
-- OpenID Connect
+- I want code running on a user's computer to call me (let's assume web browser)
+- OpenID Connect, simplified flow:
+  1. /Resource owner/ wants /client/ to log on to /authorization server/
+  2. Client is redirected to authorization server
+  3. User verifies trust of authorization server and logs on
+  4. Authorization server redirects client back (with authorization code)
+  5. Client contacts resource owner with /code/
+  6. Resource owner exchanges code for /token/
+  7. Token can be used in =Authorization: Bearer= http header
+** Service-to-service authentication
+- I want code running on other backend services to call me (outside of the context of a user)
+
+- Mutual TLS
+  * Server has a certificate, proving it's who it claims
+    + Client has established trust on a root certificate, having signed the server certificate
+  * Client has a certificate, proving it's who it claims
+    + Server has established trust on a root certificate, having signed the client certificate
+
+- In practice
+  * Create (or purchase) a root certificate for your business, lock it tight
+  * Create intermediate CAs for particular roles, e.g. for singing micro-services
+  * Use /Certificate Signing Requests/ to reflect real business flow
+  * For your service clients
+    + Have server sign client certificates directly
+    + Or, delegate to an intermediate CA, and implement whitelisting
+- Confirm that OCSP (/Online Certificate Status Protocol/) can be used to revoke certificates
 ** Authorization checks
 - Prefer to keep internal to service
 - Replicate user memberships through event sourcing
-- Synchronous calls least favourable choice
+- Synchronous calls least favorable choice
 * Software architecture
-** Spring Boot introduction
-Intro here, present some useful abstractions (kafka?). Lots of "sensible defaults" (or "magic mystery"). Infrastructure beans
-Present plain Java libraries for some of the data stores.
-** Annotation vs. functional style
-- Spring annotation style vs. functional style (e.g. [[https://www.exoscale.com/syslog/migrate-from-hystrix-to-resilience4j/][vavr and resiliance4j]]. JOOQ defaults to lambda transactions as well.)
-   * Disadvantages of annotations: Discoverability, Composability, Testability
-- Show MVC annotations vs. akka-http lambdas
-- Resiliance4j also has [[https://resilience4j.readme.io/docs/getting-started-3][spring wrappers]]
+** Spring Boot
+- /Spring/: Framework providing useful abstractions for common concepts
+  * Dependency injection of (mostly) singletons
+  * Transaction management
+  * Asynchronous messaging
+  * Many, many more
+
+- /Spring boot/: Automatically wire default singletons for various other libraries
+  * Kafka
+  * RabbitMQ
+  * Flyway
+  * JOOQ
+
+- Sensible defaults, or magic mystery?
 ** Useful modern Java features
-- Lambdas (Java 8)
-- Records (Java 14)
-  * JOOQ was [[https://github.com/jOOQ/jOOQ/issues/10287][just]] updated with record support for POJOs (for 3.15.0)
-- Type-inferrerred variables (Java 11)
-** Functional programming and immutability: VAVR
-TODO describe VAVR, with code
+*** Lambdas (Java 8+)
+- A /lambda/ is an anonymous function body
+- You can write them anywhere a /Functional Interface/ is expected, e.g.
+#+BEGIN_SRC java  :classname LambdaDemo
+public class LambdaDemo {
+    interface MathOp {
+        public int apply(int input);
+    }
+
+    static int twice(int input, MathOp op) {
+        return op.apply(op.apply(input));
+    }
+
+    public static void main(String[] args) {
+        int result = twice(10, i -> i + 1);
+        System.out.println(result);
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+: 12
+*** Function types (Java 8+)
+- For use with lambdas, Java added a few /Functional Interfaces/ in [[https://docs.oracle.com/javase/8/docs/api/java/util/function/package-summary.html][java.util.function]]
+#+BEGIN_SRC java
+package java.util.function;
+
+interface Function<T,R> {
+    R apply(T t);
+}
+
+interface Supplier<T> {
+    T get();
+}
+
+interface Consumer<T> {
+    void accept(T t);
+}
+
+interface BiFunction<T,U,R> {
+    R apply(T t, U u);
+}
+#+END_SRC
+
+*** Type-inferred variables (Java 11+)
+- Local variables now no longer need a type
+- This is especially useful with long generic types
+- =var= should be your default in new code
+
+#+BEGIN_SRC java  :classname TypeInferred
+import java.util.function.Function;
+
+public class TypeInferred {
+
+    static <T> Function<T,T> twice(Function<T,T> fun) {
+        return t -> fun.apply(fun.apply(t));
+    }
+    
+    public static void main(String[] args) {
+        var twiceAddOne = twice((Integer i) -> i + 1);
+        int result = twiceAddOne.apply(10);
+        System.out.println(result);
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+: 12
+
+*** Records (Java 14+)
+
+#+BEGIN_SRC java  :classname Rectangle :results scalar
+public record Rectangle(float length, float width) {
+    public Rectangle {
+        System.out.println("This is a compact constructor.");
+    }
+
+    public static void main(String[] args) {
+        var r = new Rectangle(5, 3);
+        System.out.println(r);
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+: This is a compact constructor.
+: Rectangle[length=5.0, width=3.0]
+
+- A =record= is an immutable value type
+  * Each argument is a private, final field
+  * Getter for each argument with the same name
+  * Constructor with all arguments (can have extra code as shown)
+  * Appropriate =equals=, =hashCode= and =toString=
+
+- Ideal for data classes, and perhaps domain model
+- Expect JSON and XML code generators to pick these up
+  * JOOQ was [[https://github.com/jOOQ/jOOQ/issues/10287][recently]] updated with =record= support for POJOs (for 3.15.0)
+** Functional programming
+*** Lambdas as control constructs
+- Lambdas are ideal to cover large code blocks
+- Let's create a simple transaction manager
+#+BEGIN_SRC java
+class Transactional {
+    public <T> T inTransaction(Function<Connection,T> fun) {
+        var conn = DriverManager.getConnection(url);
+        conn.setAutoCommit(false);
+        try {
+            fun.apply(conn);
+            conn.commit();
+        } catch (Exception x) {
+            conn.rollback();
+        } finally {
+            conn.close();
+        }
+    }
+}
+#+END_SRC
+- Now we can wrap a lambda and get a transaction around the block
+#+BEGIN_SRC java
+void updateUser(String name, String pet) {
+    inTransaction(conn -> {
+        validatePetName(conn, pet);
+
+        var stmt = conn.prepareStatement("UPDATE users SET name=?, pet=?");
+        stmt.setString(1, name);
+        stmt.setString(2, pet);
+        stmt.executeUpdate();
+        stmt.close();
+    });
+}
+#+END_SRC
+
+*** Pure functions
+- Remember CQS (Command query separation)
+- A /Pure function/ will
+  * Given the same arguments, will always return the same value
+  * Not have any side effects (I/O, global state)
+- Pure functions are great!
+  * Trivial to test
+  * Compose really well
+  * Easy to reason about
+*** Immutability
+- Let's have a look at this pure function
+#+BEGIN_SRC java
+int calculateAverage(List<Integer> items) {
+   // ...
+}
+#+END_SRC
+
+Is this a pure function?
+*** Immutability (cont.)
+- Well, here's an implementation
+#+BEGIN_SRC java
+int calculateAverage(List<Integer> items) {
+   items.clear();
+   items.add(42);
+   return 42;
+}
+#+END_SRC
+
+- To reason about pure functions, we need immutable data structures
+  * Lists that can not be modified
+  * Maps as well, and many others
+- We still want to create modified copies (of course)
+*** I don't need immutability!
+- There are many other good use cases for immutable data structures
+  * Caches
+  * Callback APIs
+  * Parallel processing
+  * Messaging
+*** VAVR
+- Library for Java 8+ for functional programming and immutability
+- As an example, let's look at [[https://www.javadoc.io/doc/io.vavr/vavr/latest/io/vavr/collection/List.html][io.vavr.collection.List]]
+  * This is an immutable linked list
+#+BEGIN_SRC java
+import io.vavr.collection.*;
+
+List<Integer> list1 = List.of(1, 2, 3);
+
+// Create a new list with more values:
+List<Integer> larger = list1.append(4).append(5);
+
+// Let's turn all integers to strings
+List<String> strings = larger.map(i => i.toString());
+#+END_SRC
+- Other useful types from =io.vavr.collection=:
+  * =Vector<T>;= (an immutable /hash trie/, with efficient inserting and removing)
+  * =HashMap<K,V>;= (an immutable hash map)
+
+- Useful control data structures in =io.vavr.control=:
+  * =Option<T>;= (single-valued element, which can either be =None= or =Some(value)=)
+    + This is the preferred way of handling potentially-absent values
+  * =Either<L,R>;= (single-valued element, which can either be =Left(leftValue)= or =Right(rightValue)= )
+    + This is the preferred way of handling values (R) that may have failed with an error (L)
+*** Null-free style
+- =NullPointerException= is hiding in every =.= in traditional java
+
+- There's no need to use =null= anymore to carry semantic value in new applications
+  * In plain JDK, there's =java.util.Optional=
+  * For more integration with collections, there's VAVR
+
+- =@NotNull= ?
+
+- Simple rule: the word =null= must not occur in your source code
+  * Exception: integration with libraries that expect =null=
+
+- =Option= (or =Optional=) is fine both for method arguments, return types, and fields
+  * However, consider method overloading as well
+** Annotation vs. functional style
+*** Composing Spring annotations
+- Let's listen from a message on RabbitMQ
+#+BEGIN_SRC java
+@RabbitListener(queues = "demoQueue")
+@Transactional
+@Timed("demoQueue.message")
+public void handleMessageFromRabbit(String message) {
+    System.out.println("We've got a message!");
+}
+#+END_SRC
+
+- Well, we can see that Spring sprinkles magic on this method which
+  * Invokes it when a message arrives on RabbitMQ
+  * Wraps it in a database transaction
+  * Measures how long it takes
+
+- But, in what order?
+
+- And, what code implements these concerns?
+*** Composing lambdas
+- Let's look at this alternative method implementation
+#+BEGIN_SRC java
+@RabbitListener(queues = "demoQueue")
+public void handleMessageFromRabbit(String message) {
+    transactions.doInTransaction(ctx -> {
+        myCustomMetric.measureTime(-> {
+            System.out.println("We've got a message!");
+        });
+    });
+}
+#+END_SRC
+
+- We keep the =@RabbitListener= (for now, ask us about streams!)
+- Other concerns' ordering is trivial to follow
+- Implementation is trivial to find
+*** Functional style
+- Java libraries are starting to use lambdas as defaults over annotations
+  - Resilience4J uses lambdas to wrap circuit breaker, bulkhead
+  - JOOQ uses lambdas to demarcate transactions
+- Advantages
+  * Discoverability, Composability, Testability
+- Sneak peak into lambdas for handling HTTP ([[https://doc.akka.io/docs/akka-http/current/routing-dsl/routes.html][akka-http]]):
+#+BEGIN_SRC java
+Route route = path("users", () ->
+    concat(
+        get(() ->
+            complete("Here could be a list of users!")
+        ),
+        post(() ->
+            entity(Jackson.unmarshaller(User.class), user ->
+                onSuccess(addUser(job), r -> complete("User added!"))
+            )
+        )
+    )
+);
+#+END_SRC
+
 ** Relational databases
-*** Migration management: Flyway
+*** TODO Migration management: Flyway
 TODO describe Flyway, link to code
-*** Interacting with data: JOOQ
+*** TODO Interacting with data: JOOQ
 TODO describe JOOQ, link to code
-** RabbitMQ
-TODO make some code
-*** Spring Boot RabbitMQ
+** TODO RabbitMQ
+ TODO make some code
+*** TODO Spring Boot RabbitMQ
 - Doesn't wait for publisher confirms by default
 - Can't fail application if RabbitMQ is/goes down
 - Consume messages: =@RabbitListener=
   * Automatically sends =basic:ack= after method returns, or =basic:nack= 
 TODO link to code
 - Produce messages
+** TODO Streams
+- Java streams is not it
+- Use slides of future vs. callbacks vs. streams
+- Akka streams very mature, show RabbitMQ example
+* Wrapping up today
+- This I already knew
+- This I learned today
 * Micro service life cycle
-** Development
-Which dependencies to mock, which to run
+** Dependency management
+- I want to write a new micro service! 
+  * I need a database, a queue, the filesystem for some caching
+  * Oh, and I'm talking to twitters API, and our home-grown analytics API
+
+- How do I deal with these dependencies during day-to-day development?
+  * "Leaf" dependencies: often OK to run directly (e.g. data stores)
+  * "Node" dependencies (other microservices): often have dependencies of their own
+    + You know its API, right?
+    + Mock it! Wiremock, or any simple http server
+
+- Running dependencies
+  * Maintain a =docker-compose= file for your project
+    + Real dependencies: they're probably on =docker-hub= already
+    + Mocks: use the =build= feature if needed
+  * New developers can get started instantly
+
+** Features
+- Don't hide your new feature on a branch
+- Release early and often
+  * But only activate it in certain environments and/or users
+- Feature flag
+- A/B testing
 ** Testing
-Test pyramid
-Unit tests (1 second)
-Component tests of one component (10 seconds)
-End-to-end tests between several components (1 minute)
-Smoke tests in production, periodically, including external deps (you pick timing)
+- Rate of bugs introduced into systems are a function of
+  * Developer experience
+  * Development environment (physical and technological)
+  * Methodology
+
+- Fixing bugs is more expensive, the later they are found
+  * While writing code: just think of different solution
+  * While code is in review: communication, context switch, and the above
+  * While code is in user testing: (much) more communication, context switch, and all the above
+  * After code is released: (even) more communication, impact analysis in data, and all the above
+
+- Test at different layers
+  * On code itself: Pair programming
+  * On one unit (e.g. class): /Unit tests/. Run in seconds.
+  * On one service (e.g. rest API): /Component tests/. Run in tens of seconds.
+  * On a suite of services (e.g. UI): /End-to-end tests/. Run in minutes.
+  * On your entire infrastructure: /Smoke tests/. Run periodically, on production, with external dependencies
 ** Deployment
-Automated pipeline to production
-Forward deploy only
-Infrastructure as code
+
+    "/All software has a test environment. Some software is lucky to have a separate production environment as well."/
+        - unknown
+
+- Automate the environments themselves (=terraform=, =vagrant=, ...)
+- All deployments to all environments must be automated
+- It's OK to have gatekeepers, e.g.
+  * After a PR is merged, automatic deploys are done to =dev= and =test= environments
+  * The =prod= environment requires a manual button press
+- Forward deploy only
+  * Rollbacks are a pain
+  * Your next deploy is only minutes away
+  * Emergencies should be rare (testing, early release, multiple environments)
 * Strategy and team dynamics
 ** Microservices and agile
 - Embrace change
@@ -298,17 +877,58 @@ Infrastructure as code
 - Automate everything (rolling production deploy)
 - Deploy in the morning, monitor your dashboards
 - However, "infra tooling" or "platform" team can be helpful
+- The same holds for the "DBA" team
 * Getting your service used
-** Public REST API 
-- RAML vs OpenAPI
-  * RAML more advanced, easier to write by hand
-  * OpenAPI more tooling support
-- Role of an XSD in a an XML API 
-- Create JSON schemas for everything
-** Public developer guide
-** Public service dashboard
-** Stay away from API gateways
+** Public API 
+- /Application Programming Interface/
+  * It's how external components affect what our service does
+  * Better lay down some rules
+- But our service is only used by our team, we don't need documentation!
+- Ideal for test-first development
 
+- Let's look at an [[file:demo-project/documentation/demo-api.html][example API]] example API together
+  * Its [[file:demo-project/documentation/demo-api.raml][RAML source]] is available
+- Semantic format for describing REST APIs: RAML, OpenAPI
+  * RAML: YAML-based, more advanced, easier to write by hand
+  * OpenAPI: JSON-based, more tooling support
+
+- Embrace content-type negotiation (XML /and/ JSON, not XML /or/ JSON)
+- XML API:
+  * Do create XSD for your data types, but communicate how it should be interpreted
+  * Do you reserve the right to add new tags and attributes?
+- JSON API:
+  * Create JSON schemas for everything
+  * In addition, verbosely describe all numeric types and their intended usage
+
+- Where do I put my private API?
+** Public developer guide
+- Just a list of endpoints may not be enough for some developers
+- Lot of context and assumed knowledge
+  * Ubiquitous language may not extend to all new API users
+  * Lack of experience with JSON, XML, HTTP headers
+
+- Write a developer guide that describes typical scenarios from a user's perspective
+  * How to get started (e.g. get an SSL certificate)
+  * How to list widgets in XML or JSON
+  * How to create a new widget
+- There's no shame in taking an English technical writing course
+- Pick tooling that suits your way of working (e.g. =HTTPie=, =org-mode= with =org-babel=, ...)
+** Public service dashboard
+- What's the first thing you do when you get to your office?
+
+- Users will be curious about your service status
+  * If your users are internal, give them access to the actual dashboard
+  * In fact, consider giving them access to your source code and issue tracker as well
+
+- Your dashboard should be showing
+  * System metrics (load average, disk space, CPU usage, memory usage, network I/O, disk I/O)
+  * Your process' metrics (CPU usage, memory usage)
+  * Your JVM's metrics (Heap committed, heap used, GC time, thread count, log4j count)
+  * Your framework's metrics (HTTP server open connections, HTTP client open connections, response times, response errors)
+  * Your business metrics (number of pets signed up, total invoice amount, size of received chat messages)
+
+- For each environment, after a few days examine the graphs
+  * Establish a baseline, and create an alert for /each/ metric
 * Assignment A
 - Target: individual developer, or developers that have worked on the same monolith.
 ** Part one: architectural description [4 hours]
@@ -330,16 +950,31 @@ Infrastructure as code
 ** Part one: architectural description [1 hour]
 ** Part two: non-functional extensions
 
+* Assignment: Extend demo project
+- Change configuration to YAML
+- Try to run application from a docker container
+- Add a domain model (as per DDD) to the demo-project
+
+* Assignment ideas
+- Take your service, and see how testing works. Are you missing layers? how many tests of each do you have?
+
 * Interesting links
 https://world.hey.com/joaoqalves/disasters-i-ve-seen-in-a-microservices-world-a9137a51
 https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
 
 * Notes
-- Need small breakout sessions during the day
-- Quick shootout to https://12factor.net/
 - Export both to beamer and plain PDF
-- Immutability, I don't need it?
-  * Caches
-  * Callback APIs
-  * Type sanity
 - Test with external monitor
+- Extra topics
+  - REST patterns:
+    + Async vs. Sync on rest, long-running sagas, websockets, SSE, long polling with client-specified timeout
+    + Content-type negotiation (xml, json, versions)
+    + Versioning across dimensions
+    + Resource tags, if-modified-since, and caching
+  - Streaming in-depth with Akka and Akka-http
+- Extend GUIDE.md to include Spring software architecture
+- Practice inkscape freehand drawing and shortcuts
+- Light theme
+- Example DDD class diagram
+
+- Pure function example

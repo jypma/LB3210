@@ -1,8 +1,0 @@
-{
-  "title": "Values schema",
-  "type": "array",
-  "id": "",
-  "items": { "$ref": "./schemas/value.json#/definitions/value" }
-
-}
-
