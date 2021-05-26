@@ -13,7 +13,7 @@ public class DemoSpringListener {
      */
     @RabbitListener(queues = "demoQueue")
     public void handle(String message) {
-        System.out.println("We've got a message!");
+        System.out.println("We've got a message: [" + message + "]");
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {

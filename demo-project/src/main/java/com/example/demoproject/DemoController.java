@@ -9,6 +9,7 @@ import com.example.demoproject.db.tables.pojos.FlywayTest;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,10 +24,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class DemoController {
     private final DSLContext ctx;
     private final Function<Configuration,DemoRepository> repository;
+    private final RabbitTemplate template;
 
-    public DemoController(Configuration cfg, Function<Configuration,DemoRepository> repository) {
+    public DemoController(Configuration cfg, Function<Configuration,DemoRepository> repository, RabbitTemplate template) {
         this.ctx = DSL.using(cfg);
         this.repository = repository;
+        this.template = template;
     }
 
     /**
@@ -45,6 +48,19 @@ public class DemoController {
         );
     }
 
+    private void sendToQueue(String message) {
+        template.invoke(cb -> {
+            cb.convertAndSend("demoQueue", message);
+            // Potentially we can do other things in between sending the message and awaiting
+            // its conformation.
+            cb.waitForConfirmsOrDie(1000);
+
+            // RabbitTemplate.invoke method is declared to take a closure which must return a value,
+            // even though that closure is intended to yield side effects (publishing on a queue).
+            // Hence, we unfortunately need a dummy return statement here.
+            return true;
+        });
+    }
 
     @GetMapping("/values")
     List<FlywayTest> all() {
@@ -54,7 +70,7 @@ public class DemoController {
     @PostMapping("/values")
     public ResponseEntity<?> create(@RequestBody FlywayTest body) {
         var created = inRepoTransaction(r -> r.create(body));
-
+        sendToQueue("Created: " + body);
         var uri = ServletUriComponentsBuilder.fromCurrentRequest()
             .pathSegment(created.getId().toString())
             .build()
@@ -71,9 +87,8 @@ public class DemoController {
         // Unfortunately, we have to verbosely copy here, since JOOQ hasn't implemented "with" methods
         // See https://github.com/jOOQ/jOOQ/issues/5257 for details.
         var obj = new FlywayTest(body.getKey(), body.getValue(), id);
-
         inRepoTransactionDo(r -> r.update(obj));
-
+        sendToQueue("Updated: " + body);
         return ResponseEntity.noContent().build();
     }
 }
