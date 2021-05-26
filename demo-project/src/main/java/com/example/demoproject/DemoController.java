@@ -70,7 +70,7 @@ public class DemoController {
     @PostMapping("/values")
     public ResponseEntity<?> create(@RequestBody FlywayTest body) {
         var created = inRepoTransaction(r -> r.create(body));
-        sendToQueue("Create: " + body);
+        sendToQueue("Created: " + body);
         var uri = ServletUriComponentsBuilder.fromCurrentRequest()
             .pathSegment(created.getId().toString())
             .build()
@@ -88,7 +88,7 @@ public class DemoController {
         // See https://github.com/jOOQ/jOOQ/issues/5257 for details.
         var obj = new FlywayTest(body.getKey(), body.getValue(), id);
         inRepoTransactionDo(r -> r.update(obj));
-        sendToQueue("Update: " + body);
+        sendToQueue("Updated: " + body);
         return ResponseEntity.noContent().build();
     }
 }
