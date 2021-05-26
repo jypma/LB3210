@@ -1,9 +1,12 @@
 #+TITLE: Microservices with Java and Spring Boot
 #+PROPERTY: header-args:plantuml :exports results :var _dpi_="150" 
-#+options: H:2
-
-* Schedule
-** Day 1
+#+options: H:3
+#+startup: beamer
+#+LATEX_CLASS: beamer
+#+LATEX_CLASS_OPTIONS: [8pt]
+* Introduction
+** Getting started
+*** Schedule, day 1
 |  Time | Duration | Activity                                                  |
 |-------+----------+-----------------------------------------------------------|
 | 13:00 |    00:10 | Welcome, Outline/Agenda                                   |
@@ -30,26 +33,12 @@
 |-------+----------+-----------------------------------------------------------|
 #+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
 
-** Day 2
-|  Time | Duration | Activity                                     |
-|-------+----------+----------------------------------------------|
-| 13:00 |    00:10 | Welcome, Outline/Agenda                      |
-| 13:10 |    00:40 | Homework presentations (6 teams, 5 min each) |
-| 13:50 |    00:10 | Recap of day 1                               |
-|-------+----------+----------------------------------------------|
-| 14:00 |    00:05 | Break                                        |
-|-------+----------+----------------------------------------------|
-| 14:05 |    00:30 | Strategy and team dynamics                   |
-| 14:35 |    00:30 | Getting your service used                    |
-| 15:05 |          |                                              |
-#+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
-
-* Talk about yourself
+*** Talk about yourself
 - My Background
 - What do I hope to get out of the course
 - What's the smallest service I've ever written
-* What's a microservice
-** Definition
+** What's a microservice
+*** Definition
 - /Service/
   * One operating system process (often on its own server)
   * Exposes an API (sometimes also a UI)
@@ -57,24 +46,25 @@
   * Theory: It's small
   * Practice: There are many
   * Independently deployable
-** Philosophy
+*** Philosophy
 - Business needs evolve
 - Team composition changes
 - Services should be disposable (design to be replaceable)
   * Rebuilt in 1-3 months
 - Per service, use best technology matching experience and requirements 
-** Service scope
+*** Service scope
 - Service belongs to one team
   * Team is responsible for entire service software life cycle
 - Data store belongs to one service
 - Independently deployable
-** Use cases 
+*** Use cases 
 - Embrace Conway's law: One system belongs to at most one team
 - Monoliths are fine to start with
   * Time to market and technical debt vs. holistic design
 - Strangler pattern
 * Design for resilience
-** Your (or your colleague's) service will be down
+** Service failure
+*** Your (or your colleague's) service will be down
 P(everything working) = P(one service is working) ^ n_services
 
 /Our service is up 99% of the time!/
@@ -82,6 +72,7 @@ P(everything working) = P(one service is working) ^ n_services
 Well, we have about 30 microservices, each with 3 copies. 
 That means that 63% of the time, at least one service is down somewhere.
 ** Creating services
+*** Guidelines
 - Prefer sharded (partitioned) data stores over single points of failure
 - Idempotency for all incoming data
 - Always deploy more than 1 copy 
@@ -98,6 +89,7 @@ A single resource pool is covering multiple types of application requests
 
 [[file:graphics/svg/with_bulkhead.png]]
 ** Consuming services
+*** Guidelines
 - Design for failure
   * Have methods/functions reflect doing I/O
   * Make time (and timeouts) explicit
@@ -128,12 +120,8 @@ Half_Open -> Open : [failure rate above threshold]
 
 #+RESULTS:
 [[file:graphics/circuit-breaker-state.png]]
-** Need more inspiration?
-- The twelve-factor app, [[https://12factor.net/][https://12factor.net/]]
-- Provides sensible suggestions on a lot of topics
-  * Port binding, dev/prod differences, admin processes
-- Not the only way (geared towards ruby/python), but worth a thorough read
-** Microservice pitfalls
+** Guidelines
+*** Microservice pitfalls
 - Service co-dependencies
   * Keep HTTP calls one way only
   * Plugin pattern
@@ -141,9 +129,14 @@ Half_Open -> Open : [failure rate above threshold]
   * Added latency and failure possibility
   * Avoid these with event sourcing
   * Replicate data instead, or call asynchronously when possible
-
+*** Need more inspiration?
+- The twelve-factor app, [[https://12factor.net/][https://12factor.net/]]
+- Provides sensible suggestions on a lot of topics
+  * Port binding, dev/prod differences, admin processes
+- Not the only way (geared towards ruby/python), but worth a thorough read
 * Infrastructure architecture
-** Get familiar with linux
+** It's a linux world
+*** Get familiar with linux
 - Micro services are a linux world
 - It's easier than ever to get started
   * WSL 2 (some integration, less "linux", and has [[https://www.polv.cc/post/2020/11/wsl-vs-virtualbox][issues]])
@@ -151,6 +144,7 @@ Half_Open -> Open : [failure rate above threshold]
   * Dual boot e.g. Ubuntu
   * Just get a Raspberry Pi
 ** Partitioned data stores
+*** Partitioned data stores: introduction
 - All data is split into partitions (also called /shards/), which are copied onto servers
 - For each data element, a /key/ determines which partition it's stored on
 #+BEGIN_SRC plantuml :file graphics/partitioned-data-stores.png :hidden
@@ -203,6 +197,7 @@ Full-text search is often important when dealing with data.
 - Google: Hosted elasticsearch
 - Azure: Hosted elasticsearch
 ** Single-server data stores
+*** Single-server data stores: introduction
 - Many moving parts needed to make primary/replica failover work
   * PostgreSQL: Multiple servers possible, but failures leak to the client. =pgBouncer= as alternative.
   * MariaDB: Multiple servers possible with failover, fail-back is a manual process
@@ -229,6 +224,7 @@ Full-text search is often important when dealing with data.
   * This is async, so no guarantee that the server receives it
     + Two generals agree
 ** Monitoring and alerting
+*** Introduction
 - Logging need not be a cross-cutting concern
   * Create monitored metrics instead
 - Your service dashboard is as important as your public API
@@ -257,8 +253,8 @@ Full-text search is often important when dealing with data.
     + e.g. the response time to a request
   * /Distribution summary/ (sometimes called /histogram/ or even /gauge/): Recorded values (and units) that go with events
     + e.g. the size of incoming requests in bytes
-** TODO Request tracing
-TODO write about Jaeger and Zipkin
+** Request tracing
+*** TODO write about Jaeger and Zipkin
 ** Deployment
 *** Virtualization and containerization
 - First, there was plain hardware
@@ -334,6 +330,7 @@ services:
 - Heap dump on out of memory (this /will/ happen)
   * =-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps= to an =emptyDir= volume
 ** Configuration
+*** Handling of externalized values
 - Externalize "magic numbers" and strings
 - Embrace your framework's ability to have /internal/ and /external/ configuration
   * /Internal/ (inside docker container) has defaults and values that don't really change
@@ -345,11 +342,12 @@ services:
   * use files instead
 - Environment variables for service injection: don't do it (ordering issues)
   * use dns instead (e.g. dns-java, akka discovery, [...])
-** TODO Load balancer
-- TODO write about kubernetes ingres (typically nginx)
-- TODO write about haproxy load balancer (tcp-level)
+** Load balancer
+*** TODO write about kubernetes ingres (typically nginx)
+*** TODO write about haproxy load balancer (tcp-level)
 * Data architecture
 ** Domain-driven design
+*** Introduction
 - Software methodology
   * /Names in code must names used by the business/
 - Popularized in 2003 by [[https://www.dddcommunity.org/book/evans_2003/][Eric Evans]] in his book
@@ -386,7 +384,8 @@ services:
 
 - Why do you think the focus is on /Events/, rather than /Aggregates/?
 - Useful example [[https://www.rubiconred.com/blog/event-storming][here]]
-** Command query responsibility segregation
+** Other patterns
+*** Command query responsibility segregation
 - CQRS: Have two separate data models (and split your API accordingly)
   * A /command/ model, for API calls that only change data (and do not return data)
   * A /query/ model, for API calls that only return data (and do not change data)
@@ -396,7 +395,7 @@ services:
   * Perform a /query/, returning a value (and not having side effects)
 
 - We'll see CQS again
-** Event sourcing
+*** Event sourcing
 - Traditional relational database: CRUD
   * Update in place
 - Change log, shadow table
@@ -472,7 +471,8 @@ message SearchRequest {
 - Built with organic versioning in mind
 - Ideal for storing events of event sourcing (if you have a lot of them)
 * Security architecture
-** User-to-service authentication
+** Authentication patterns
+*** User-to-service authentication
 - I want code running on a user's computer to call me (let's assume web browser)
 - OpenID Connect, simplified flow:
   1. /Resource owner/ wants /client/ to log on to /authorization server/
@@ -482,7 +482,7 @@ message SearchRequest {
   5. Client contacts resource owner with /code/
   6. Resource owner exchanges code for /token/
   7. Token can be used in =Authorization: Bearer= http header
-** Service-to-service authentication
+*** Service-to-service authentication
 - I want code running on other backend services to call me (outside of the context of a user)
 
 - Mutual TLS
@@ -499,12 +499,14 @@ message SearchRequest {
     + Have server sign client certificates directly
     + Or, delegate to an intermediate CA, and implement whitelisting
 - Confirm that OCSP (/Online Certificate Status Protocol/) can be used to revoke certificates
-** Authorization checks
+** Implementation
+*** Authorization checks
 - Prefer to keep internal to service
 - Replicate user memberships through event sourcing
 - Synchronous calls least favorable choice
 * Software architecture
 ** Spring Boot
+*** About Spring Boot
 - /Spring/: Framework providing useful abstractions for common concepts
   * Dependency injection of (mostly) singletons
   * Transaction management
@@ -636,6 +638,7 @@ class Transactional {
     }
 }
 #+END_SRC
+*** Lambdas as control constructs (contd.)
 - Now we can wrap a lambda and get a transaction around the block
 #+BEGIN_SRC java
 void updateUser(String name, String pet) {
@@ -692,7 +695,6 @@ int calculateAverage(List<Integer> items) {
 *** VAVR
 - Library for Java 8+ for functional programming and immutability
 - As an example, let's look at [[https://www.javadoc.io/doc/io.vavr/vavr/latest/io/vavr/collection/List.html][io.vavr.collection.List]]
-  * This is an immutable linked list
 #+BEGIN_SRC java
 import io.vavr.collection.*;
 
@@ -804,10 +806,30 @@ TODO link to code
 - Use slides of future vs. callbacks vs. streams
 - Akka streams very mature, show RabbitMQ example
 * Wrapping up today
+** Let's do another round
+*** Please share
 - This I already knew
 - This I learned today
+* Start of day 2
+** Getting started
+*** Schedule, Day 2
+|  Time | Duration | Activity                                     |
+|-------+----------+----------------------------------------------|
+| 13:00 |    00:10 | Welcome, Outline/Agenda                      |
+| 13:10 |    00:40 | Homework presentations (6 teams, 5 min each) |
+| 13:50 |    00:10 | Recap of day 1                               |
+|-------+----------+----------------------------------------------|
+| 14:00 |    00:05 | Break                                        |
+|-------+----------+----------------------------------------------|
+| 14:05 |    00:30 | Strategy and team dynamics                   |
+| 14:35 |    00:30 | Getting your service used                    |
+| 15:05 |          |                                              |
+#+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
+
+
 * Micro service life cycle
 ** Dependency management
+*** Developing a new service
 - I want to write a new micro service! 
   * I need a database, a queue, the filesystem for some caching
   * Oh, and I'm talking to twitters API, and our home-grown analytics API
@@ -818,30 +840,34 @@ TODO link to code
     + You know its API, right?
     + Mock it! Wiremock, or any simple http server
 
-- Running dependencies
+*** Running dependencies
   * Maintain a =docker-compose= file for your project
     + Real dependencies: they're probably on =docker-hub= already
     + Mocks: use the =build= feature if needed
   * New developers can get started instantly
 
-** Features
+** Extending a service
+*** Developing a new feature
 - Don't hide your new feature on a branch
 - Release early and often
   * But only activate it in certain environments and/or users
 - Feature flag
 - A/B testing
 ** Testing
+*** Introducing bugs
 - Rate of bugs introduced into systems are a function of
   * Developer experience
   * Development environment (physical and technological)
   * Methodology
 
+*** Finding bugs
 - Fixing bugs is more expensive, the later they are found
   * While writing code: just think of different solution
   * While code is in review: communication, context switch, and the above
   * While code is in user testing: (much) more communication, context switch, and all the above
   * After code is released: (even) more communication, impact analysis in data, and all the above
 
+*** Preventing bugs
 - Test at different layers
   * On code itself: Pair programming
   * On one unit (e.g. class): /Unit tests/. Run in seconds.
@@ -849,10 +875,10 @@ TODO link to code
   * On a suite of services (e.g. UI): /End-to-end tests/. Run in minutes.
   * On your entire infrastructure: /Smoke tests/. Run periodically, on production, with external dependencies
 ** Deployment
-
+*** Getting your service out there
     "/All software has a test environment. Some software is lucky to have a separate production environment as well."/
         - unknown
-
+*** Doing deployments
 - Automate the environments themselves (=terraform=, =vagrant=, ...)
 - All deployments to all environments must be automated
 - It's OK to have gatekeepers, e.g.
@@ -863,35 +889,38 @@ TODO link to code
   * Your next deploy is only minutes away
   * Emergencies should be rare (testing, early release, multiple environments)
 * Strategy and team dynamics
-** Microservices and agile
+** Succeeding with micro-services
+*** Microservices and agile
 - Embrace change
 - Team visibility
 - Stakeholder support
 - Team(s) in same time zone as stakeholders (which includes users)
   * Distributed users? distributed team!
-** Migrating your monolith
+*** Migrating your monolith
 - Chainsaw anti-pattern
 - Strangler pattern
 - Maven modules
-** Do we need a separate dev/ops team? (no)
+*** Do we need a separate dev/ops team? (no)
 - Automate everything (rolling production deploy)
 - Deploy in the morning, monitor your dashboards
 - However, "infra tooling" or "platform" team can be helpful
 - The same holds for the "DBA" team
 * Getting your service used
 ** Public API 
+*** An API is an interface
 - /Application Programming Interface/
   * It's how external components affect what our service does
   * Better lay down some rules
 - But our service is only used by our team, we don't need documentation!
 - Ideal for test-first development
-
+- Where do I put my private API?
+*** Example API
 - Let's look at an [[file:demo-project/documentation/demo-api.html][example API]] example API together
   * Its [[file:demo-project/documentation/demo-api.raml][RAML source]] is available
 - Semantic format for describing REST APIs: RAML, OpenAPI
   * RAML: YAML-based, more advanced, easier to write by hand
   * OpenAPI: JSON-based, more tooling support
-
+*** Content-type negotiation
 - Embrace content-type negotiation (XML /and/ JSON, not XML /or/ JSON)
 - XML API:
   * Do create XSD for your data types, but communicate how it should be interpreted
@@ -900,13 +929,13 @@ TODO link to code
   * Create JSON schemas for everything
   * In addition, verbosely describe all numeric types and their intended usage
 
-- Where do I put my private API?
 ** Public developer guide
+*** But I've written the documentation!
 - Just a list of endpoints may not be enough for some developers
 - Lot of context and assumed knowledge
   * Ubiquitous language may not extend to all new API users
   * Lack of experience with JSON, XML, HTTP headers
-
+*** Different people, different learning styles
 - Write a developer guide that describes typical scenarios from a user's perspective
   * How to get started (e.g. get an SSL certificate)
   * How to list widgets in XML or JSON
@@ -914,12 +943,13 @@ TODO link to code
 - There's no shame in taking an English technical writing course
 - Pick tooling that suits your way of working (e.g. =HTTPie=, =org-mode= with =org-babel=, ...)
 ** Public service dashboard
+*** Priorities!
 - What's the first thing you do when you get to your office?
 
 - Users will be curious about your service status
   * If your users are internal, give them access to the actual dashboard
   * In fact, consider giving them access to your source code and issue tracker as well
-
+*** Designing your dashboard
 - Your dashboard should be showing
   * System metrics (load average, disk space, CPU usage, memory usage, network I/O, disk I/O)
   * Your process' metrics (CPU usage, memory usage)
@@ -929,9 +959,10 @@ TODO link to code
 
 - For each environment, after a few days examine the graphs
   * Establish a baseline, and create an alert for /each/ metric
-* Assignment A
+* Assignments
+** Assignment A
 - Target: individual developer, or developers that have worked on the same monolith.
-** Part one: architectural description [4 hours]
+*** Part one: architectural description [4 hours]
 - Pick a recent project where you have worked on a /monolith/. The bigger the better.
 - Create a (rough) sketch that depicts the monolith the most important other systems it communicates with
   * Include both clients and dependencies
@@ -942,20 +973,21 @@ TODO link to code
   * Try to include the size of teams and how often they perform changes
 - Create a (rough) timeline that shows how a typical new feature finds its way from inception to being in production
   * Include testing in various contexts, customer meetings, and other forms of feedback
-** Part two: microservice design
+*** Part two: microservice design
 - Using the techniques from this course, draw a set of candidate microservices that can take over part(s) of the monolith
 - 
-* Assignment B
+** Assignment B
 - Target: individual developer, or developers that have been on a green-field project together.
-** Part one: architectural description [1 hour]
-** Part two: non-functional extensions
+*** Part one: architectural description [1 hour]
+*** Part two: non-functional extensions
 
-* Assignment: Extend demo project
+** Assignment: Extend demo project
+*** To be designed
 - Change configuration to YAML
 - Try to run application from a docker container
 - Add a domain model (as per DDD) to the demo-project
 
-* Assignment ideas
+*** Other assignment ideas
 - Take your service, and see how testing works. Are you missing layers? how many tests of each do you have?
 
 * Interesting links
