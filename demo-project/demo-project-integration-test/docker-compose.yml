@@ -2,7 +2,7 @@ version: '3.1'
 
 services:
   app:
-    image: logb/demo-project:latest
+    image: logb/demo-project:0.0.1-SNAPSHOT
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/demo
       SPRING_DATASOURCE_USERNAME: demo
@@ -23,13 +23,7 @@ services:
       POSTGRES_USER: demo
       POSTGRES_DB: demo
       POSTGRES_PASSWORD: example
-    ports:
-      - 5432
 
   rabbitmq:
     image: rabbitmq:3.8.16-alpine
-    # Uncomment this to have the DB come up when you start docker / your laptop:
-    #restart: always
-    ports:
-      - 5672    # AMQP
-      - 15672  # Web UI
+
