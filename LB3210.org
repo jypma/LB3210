@@ -470,6 +470,11 @@ message SearchRequest {
 - Started at Google, today >70 implementations
 - Built with organic versioning in mind
 - Ideal for storing events of event sourcing (if you have a lot of them)
+*** Designing for extensibility
+- Use schemes and code lists instead of fixed enumerations
+- Use rich data objects instead of flat numeric values
+  * e.g. =Amount=, =Measurement=, =GeoCoordinate=, =Quantity=
+- Use namespaces and URIs where you can
 * Security architecture
 ** Authentication patterns
 *** User-to-service authentication
@@ -961,7 +966,7 @@ Route route = path("users", () ->
   * Your next deploy is only minutes away
   * Emergencies should be rare (testing, early release, multiple environments)
 * Strategy and team dynamics
-** Succeeding with micro-services
+** Succeeding with microservices
 *** Microservices and agile
 - Embrace change
 - Team visibility
@@ -977,6 +982,208 @@ Route route = path("users", () ->
 - Deploy in the morning, monitor your dashboards
 - However, "infra tooling" or "platform" team can be helpful
 - The same holds for the "DBA" team
+* A selection of REST patterns
+** Resource tags and caching
+*** Resources have versions
+- Servers can include an =ETag=, which specifies which /version/ of a resource is being served
+#+BEGIN_SRC restclient
+GET http://example.com/widgets/15
+
+200 OK
+Content-Type: application/json
+ETag: "524"
+#+END_SRC
+- No guarantees are made about the content of =ETag=, but often APIs will document what it represents, e.g.
+  * A timestamp of some sort
+  * A monotonically-increasing number
+  * A hash of the latest content
+*** Conditionally retrieving a resource
+- If the latest =ETag= we have seen is "524", we can poll for changes
+- The =If-None-Match= header will /only/ execute our request if the =ETag= has changed
+#+BEGIN_SRC restclient
+GET http://example.com/widgets/15
+If-None-Match: 524
+
+304 Not Modified
+#+END_SRC
+- The server will not send any response if the resource is still at this version
+*** Optimistic offline lock
+- The =ETag= is also useful to make sure nobody else has edited a resource that we're writing back
+- The =If-Match= header will /only/ execute our request if the =ETag= matches
+#+BEGIN_SRC restclient
+PUT http://example.com/widgets/15
+If-Match: 12345
+Content-Type: application/json
+
+{ /* ... some content ..* }
+
+412 Precondition Failed
+#+END_SRC
+*** Resources can be modified
+- Servers can include a =Last-Modified= tag, which specifies /when/ a resource was last changed
+- This can be useful in addition to an =ETag= tag
+#+BEGIN_SRC restclient
+GET http://example.com/widgets/15
+
+200 OK
+Content-Type: application/json
+ETag: "524"
+Last-Modified: Wed, 21 Oct 2015 07:28:00 GMT
+#+END_SRC
+- Request header exist that perform checks against the last-modified date, like =ETag=:
+  * =If-Modified-Since= executes the request /only/ if the last-modified is past the given date
+  * =If-Unmodified-Since= executes the request /only/ if the last-modified is at most the given date
+*** Preventing caching
+- For service-to-service REST calls, we generally don't worry about caching
+- For web browsers, we often want to disallow caching of REST responses
+  * Include =Cache-Control: no-cache=
+** Content-type negotiation
+*** Resource representation
+- The same REST URI is allowed to have several representations
+  * XML, JSON or Protobuf
+  * Short or long
+  * Version 1 or version 2
+*** Specifying resource representation
+- The server specifies the representation of a resource
+  * The =Content-Type= resource header
+- This is typically a well-known value
+  * =text/xml=
+  * =application/json=
+  * =application/protobuf=
+- But it doesn't have to be
+  * =application/vnd.example.myresource.v1+json=
+  * =application/vnd.example.myresource.v2+json=
+  * =application/vnd.example.myresource.short+json=
+  * =application/vnd.example.myresource.long+json=
+*** Requesting a resource type
+- The client sends an =Accept= header with the representations it wants/understands
+- In case of a single representation:
+#+BEGIN_SRC restclient
+GET http://localhost/myresource
+Accept: application/json
+#+END_SRC
+- In case multiple representations are alright (order has no semantic meaning):
+#+BEGIN_SRC restclient
+GET http://localhost/myresource
+Accept: application/json, text/xml
+#+END_SRC
+- Multiple representations are alright, but preference for xml:
+#+BEGIN_SRC restclient
+GET http://localhost/myresource
+Accept: application/json;q=0.9, text/xml
+#+END_SRC
+*** Serving resource alternatives
+- Content-type negotiation is complex to implement
+- How easy it is to support depends on your framework
+  * /Spring Boot/ has many different ways to manage resource representation
+    + Look into =HttpMessageConverter=, so you can take control
+  * Others, e.g. =akka-http= has a marshaling infrastructure that directly models content-type negotiation
+** Asynchronous and long-running processes
+*** Case: REST API to represent workflow instances
+- Start a new workflow
+- See which human is working on the case
+- Quickly resume if system is working on the case
+*** REST is about resources
+- For slow-running processes, make the process itself a resource, e.g.
+  * =/workflows/=
+  * =/transactions/=
+  * =/cases/=
+- You can now reason about individual processes
+  * Query state, affect them, delete them, see changes
+*** Observing change on one resource
+- Tell client to periodically poll
+  * Use =If-None-Match= for early exit
+  * Use heavy caching on the server-side to reply to polls as early as possible
+*** Observing change on a set of resources
+- Build your system using /Event Sourcing/
+- Expose your event journal (or a light, or filtered version) as a REST resource
+  * This can be done regardless of storage (JDBC, Cassandra, Kafka)
+- Various candidates for the data format
+  * Plain
+#+BEGIN_SRC restclient
+GET http://localhost/journal/events?since=Wed+May+26+11:59:05+2021+UTC&limit=50
+Accept: application/json
+#+END_SRC
+  * Hanging GET
+#+BEGIN_SRC restclient
+GET http://localhost/journal/events?since=Wed+May+26+11:59:05+2021+UTC&limit=50&maxwait=60000
+Accept: application/json
+#+END_SRC
+  * Server-sent events ([[https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events][SSE]])
+#+BEGIN_SRC restclient
+GET http://localhost/journal/events?since=Wed+May+26+11:59:05+2021+UTC
+Accept: text/event-stream
+#+END_SRC
+  * Web sockets
+#+BEGIN_SRC restclient
+GET http://localhost/journal/events?since=Wed+May+26+11:59:05+2021+UTC
+Connection: Upgrade
+Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw==
+Sec-WebSocket-Protocol: chat, superchat
+Sec-WebSocket-Version: 13
+
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: HSmrc0sMlYUkAGmm5OPpG2HaGWk=
+Sec-WebSocket-Protocol: chat
+#+END_SRC
+** Multi-dimensional versioning
+*** Semantic versioning in REST
+- Often used for library dependencies and packaged software releases
+- Version number has three parts (/major/, /minor/, /patch/): version =2.0.15=
+  * A new release always must have a new version
+  * If a release has no new functionality (only bugfixes), increase the /patch/
+  * If a release has new functionality that doesn't break API promises, increase the /minor/
+  * If a release has new breaking functionality, increase the /major/
+- How does this relate to REST?
+*** Semantic versioning in REST (cont.)
+- How does this relate to REST?
+  * It doesn't!
+  * REST is a call to a remote system
+    + Could be deploying new versions multiple times per day
+  * The whole point is the client /doesn't/ want (or need) to see those
+
+- OK, what do we do instead?
+  * Version across all HTTP dimensions
+*** Versioning in body structure
+- Many extensions fit fine into existing body structure
+  * Adding of fields
+  * Adding of values to enumerations or code lists
+- If DDD has done its work, terminology should mostly hold
+*** Versioning in content type
+- If a breaking change is needed
+- It might be limited to only one content type
+- Client requests old version:
+#+BEGIN_SRC restclient
+GET http://localhost/myresource
+Accept: application/vnd.example.myresource.v1+json
+#+END_SRC
+- Client requests new version:
+#+BEGIN_SRC restclient
+GET http://localhost/myresource
+Accept: application/vnd.example.myresource.v2+json
+#+END_SRC
+*** Versioning in query parameters
+- Don't do this
+  * Query parameters affect /which/ and /what/ resource(s) are returned, not /how/
+- The meaning of query parameters may themselves be versioned
+*** Versioning in path
+#+BEGIN_SRC restclient
+GET http://localhost/service/versions/1/myresource
+#+END_SRC
+- Often used as first choice
+- Should be your last resort:
+  * Your path is the name of your resource
+  * Your DDD workshop (probably) didn't event storm about "versions"
+  * Your system (probably) doesn't have 2 complete implementations
+  * This does often not reflect reality
+*** Versioning using custom headers
+- Client sends a custom header of the API version they've implemented against
+- Server sends a custom header of the API version that's current
+- This does kinda work
+
+- Fairly weak way to work around /actually/ dealing with semantic changes and compatibility
 * Getting your service used
 ** Public API 
 *** An API is an interface
@@ -1076,7 +1283,6 @@ https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
     + Versioning across dimensions
     + Resource tags, if-modified-since, and caching
   - Streaming in-depth with Akka and Akka-http
-- Extend GUIDE.md to include Spring software architecture
 - Practice inkscape freehand drawing and shortcuts
 - Light theme
 - Example DDD class diagram
