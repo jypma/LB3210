@@ -788,10 +788,46 @@ Route route = path("users", () ->
 #+END_SRC
 
 ** Relational databases
-*** TODO Migration management: Flyway
-TODO describe Flyway, link to code
-*** TODO Interacting with data: JOOQ
-TODO describe JOOQ, link to code
+*** Migration management
+- Relational databases change, just like code
+
+- Change management processes in the wild
+  * Schema changes just aren't allowed
+  * Schema changes require a paper form, a DBA to sign off, and a 6-month process
+  * Schema changes are done manually, live, on the production database, by a junior dev
+
+- Manage your migrations: =Flyway=
+  * Write incremental changes as scripts
+  * Trace script execution in the database itself
+  * See an [[file:demo-project/src/main/resources/flyway/migrations/V1__createdb.sql][example]]
+*** Interacting with data
+- Several layers of abstraction
+  * Direct JDBC
+  * Spring =JdbcTemplate=: Thin wrapper, helps with resource clean-up
+  * Spring data (/JDBC/ or /JPA/ variants): Automates mapping to/from Java objects
+  * JOOQ: Compiles code from your database schema
+
+- Remember databases are allowed to change?
+  * Let's use the compiler to our advantage
+*** Introducing JOOQ
+Given the following table:
+#+BEGIN_SRC sql
+CREATE TABLE entry (
+  id SERIAL PRIMARY KEY,
+  key VARCHAR(64),
+  value VARCHAR(255)
+);
+#+END_SRC
+
+JOOQ will allow you to write code like:
+
+#+BEGIN_SRC java
+ctx.selectFrom(ENTRY).orderBy(ENTRY.ID).fetchInto(Entry.class)
+#+END_SRC
+
+- Type-safe table and column definitions
+- Automatic mapping into generated class
+- Compile errors when you remove/change columns in your schema
 ** TODO RabbitMQ
  TODO make some code
 *** TODO Spring Boot RabbitMQ
