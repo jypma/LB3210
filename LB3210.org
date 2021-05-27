@@ -1238,6 +1238,7 @@ GET http://localhost/service/versions/1/myresource
 
 - For each environment, after a few days examine the graphs
   * Establish a baseline, and create an alert for /each/ metric
+* Bonus: Asynchronous Java
 * Assignments
 ** Assignment A
 - Target: individual developer, or developers that have worked on the same monolith.
@@ -1277,11 +1278,6 @@ https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
 - Export both to beamer and plain PDF
 - Test with external monitor
 - Extra topics
-  - REST patterns:
-    + Async vs. Sync on rest, long-running sagas, websockets, SSE, long polling with client-specified timeout
-    + Content-type negotiation (xml, json, versions)
-    + Versioning across dimensions
-    + Resource tags, if-modified-since, and caching
   - Streaming in-depth with Akka and Akka-http
 - Practice inkscape freehand drawing and shortcuts
 - Light theme
