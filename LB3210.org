@@ -1,38 +1,65 @@
 #+TITLE: Microservices with Java and Spring Boot
 #+PROPERTY: header-args:plantuml :exports results :var _dpi_="150" 
 #+options: H:3
-#+startup: beamer
-#+LATEX_CLASS: beamer
+#+latex_header: \hypersetup{colorlinks=true,linkcolor=blue}
 #+LATEX_CLASS_OPTIONS: [8pt]
 * Introduction
 ** Getting started
-*** Schedule, day 1
-|  Time | Duration | Activity                                                  |
-|-------+----------+-----------------------------------------------------------|
-| 13:00 |    00:10 | Welcome, Outline/Agenda                                   |
-| 13:10 |    00:20 | Round table introductions                                 |
-| 13:30 |    00:20 | What's a microservice                                     |
-| 13:50 |    00:20 | Design for resilience                                     |
-|-------+----------+-----------------------------------------------------------|
-| 14:10 |    00:20 | Break(out) 1: Identify services & resilience (or lack of) |
-|-------+----------+-----------------------------------------------------------|
-| 14:30 |    00:15 | Round table identified services exchange                  |
-| 14:45 |    00:45 | Infrastructure architecture                               |
-|-------+----------+-----------------------------------------------------------|
-| 15:30 |    00:20 | Break(out) 2: Checkout, install and run demo-project      |
-|-------+----------+-----------------------------------------------------------|
-| 15:50 |    00:30 | Data architecture                                         |
-| 16:20 |    00:10 | Security architecture                                     |
-| 16:30 |    00:30 | Software architecture                                     |
-| 17:00 |    00:15 | GUIDE: Introduction, API, Metrics                         |
-|-------+----------+-----------------------------------------------------------|
-| 17:15 |    00:55 | Break(out) 3: Food (?), Extend demo-project with (???)    |
-|-------+----------+-----------------------------------------------------------|
-| 18:10 |    00:30 | Presentation(s) of extended demo project                  |
-| 18:40 |    00:20 | Homework, Wrap-up, reserved time for extra subjects       |
-|-------+----------+-----------------------------------------------------------|
-#+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
+*** Welcome
+[[file:graphics/microservices.png]]
+*** This course
 
+Freely available here:
+[[https://github.com/jypma/LB3210][https://github.com/jypma/LB3210]]
+
+- PDF of slides will be available at completion
+- Pull requests with fixes to our typos are welcome :-)
+
+*** About your instructors
+- Jan Ypma
+  * Almost 20 years of Java experience (yay, generics!)
+  * Groovy, Scala, C++, Rust, Lisp
+  * Contributor to =akka=, =akka-http= and others
+  * Fan of functional programming and distributed systems
+  * jan@ypmania.nl, https://linkedin.com/in/jypma
+
+- Jakob Bendsen
+ * 20+ years of IT and Java experience
+ * Teaching at ITU and numerous courses in Danish IT industry
+ * Experience with Java/Jakarta EE and Spring (Boot)
+ * Likes Kotlin and elegant programs
+ * jakob@logb.dk, https://linkedin.com/in/jbendsen
+[[file:graphics/lb-logo_stort_1363x359.jpg]]
+
+
+*** Schedule, day 1
+|  Time | Duration | Activity                                            | Weight |
+|-------+----------+-----------------------------------------------------+--------|
+| 13:00 |    00:10 | Welcome, Outline/Agenda                             |      2 |
+| 13:10 |    00:20 | Round table introductions                           |        |
+| 13:30 |    00:10 | What's a microservice                               |      4 |
+| 13:40 |    00:20 | Design for resilience                               |     12 |
+|-------+----------+-----------------------------------------------------+--------|
+| 14:00 |    00:20 | Break(out) 1                                        |        |
+|-------+----------+-----------------------------------------------------+--------|
+| 14:20 |    00:15 | Discussion of breakout results                      |        |
+| 14:35 |    00:45 | Infrastructure architecture                         |     27 |
+|-------+----------+-----------------------------------------------------+--------|
+| 15:20 |    00:20 | Break(out) 2                                        |        |
+|-------+----------+-----------------------------------------------------+--------|
+| 15:40 |    00:30 | Data architecture                                   |     13 |
+|-------+----------+-----------------------------------------------------+--------|
+| 16:10 |    00:10 | Break                                               |        |
+|-------+----------+-----------------------------------------------------+--------|
+| 16:20 |    00:45 | Software architecture                               |     28 |
+| 17:05 |    00:10 | Demo project API demo and code overview             |      5 |
+|-------+----------+-----------------------------------------------------+--------|
+| 17:15 |    00:55 | Break(out) 3                                        |        |
+|-------+----------+-----------------------------------------------------+--------|
+| 18:10 |    00:30 | Presentation(s) of extended demo project            |        |
+| 18:40 |    00:20 | Homework, Wrap-up, reserved time for extra subjects |        |
+|-------+----------+-----------------------------------------------------+--------|
+#+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
 *** Talk about yourself
 - My Background
 - What do I hope to get out of the course
@@ -134,8 +161,30 @@ Half_Open -> Open : [failure rate above threshold]
 - Provides sensible suggestions on a lot of topics
   * Port binding, dev/prod differences, admin processes
 - Not the only way (geared towards ruby/python), but worth a thorough read
+* Break(out) 1
+** Service discovery
+*** Introduction
+- Break into teams of 2-4 people (20 min)
+
+- Discuss the services and projects you've been a part of, and identify:
+  * Examples of a microservice
+  * Examples of /definitely NOT/ a microservice
+
+- For each service found, describe how /resilient/ the given service was
+  * Usage or absence of /bulkhead/ and/or /circuit breaker/
+  * Usage or absence of clustering / replication
+
+- Oh, and check your laptop, make sure you have the following:
+  * =git=
+  * =docker-compose=
+  * =java= (8+, preferably 11+)
+
+*** Discussion
+- Describe the services you have found
 * Infrastructure architecture
 ** It's a linux world
+*** About linux
+[[file:graphics/linux.jpg]]
 *** Get familiar with linux
 - Micro services are a linux world
 - It's easier than ever to get started
@@ -143,6 +192,8 @@ Half_Open -> Open : [failure rate above threshold]
   * VirtualBox with e.g. Ubuntu (real linux)
   * Dual boot e.g. Ubuntu
   * Just get a Raspberry Pi
+
+[[file:graphics/tux.png]]
 ** Partitioned data stores
 *** Partitioned data stores: introduction
 - All data is split into partitions (also called /shards/), which are copied onto servers
@@ -254,7 +305,21 @@ Full-text search is often important when dealing with data.
   * /Distribution summary/ (sometimes called /histogram/ or even /gauge/): Recorded values (and units) that go with events
     + e.g. the size of incoming requests in bytes
 ** Request tracing
-*** TODO write about Jaeger and Zipkin
+*** Complex service dependencies
+- Services can have complex calling stacks
+[[file:graphics/svg/tsflow.png]]
+
+- When something breaks, it's good to have a trace
+
+- Other reasons
+  * Identify performance problems
+  * Find bottlenecks
+  * Track resource usage
+*** Two mature solutions
+- [[https://www.jaegertracing.io/][Jaeger]] and [[https://zipkin.io/][Zipkin]]
+  * Both have vast library and framework support
+  * Many metrics framework support both backends
+[[file:graphics/zipkin.png]]
 ** Deployment
 *** Virtualization and containerization
 - First, there was plain hardware
@@ -343,8 +408,36 @@ services:
 - Environment variables for service injection: don't do it (ordering issues)
   * use dns instead (e.g. dns-java, akka discovery, [...])
 ** Load balancer
-*** TODO write about kubernetes ingres (typically nginx)
-*** TODO write about haproxy load balancer (tcp-level)
+*** Allowing the world to call your service
+- Deployed kubernetes services only reachable within the cluster
+- Need to define an =ingress=
+  * HTTP-level ([[https://github.com/nginxinc/kubernetes-ingress][NGinx]]) or TCP-level ([[https://github.com/haproxytech/kubernetes-ingress][HAProxy]])
+  * Provided by your native cloud provider
+  * Hybrid setups
+- Additional, external, load balancer in front of ingress controller
+* Break(out) 2
+** Demo project
+*** Get the demo project
+This course, and its accompanying Spring Boot demo project, are on github.
+
+- Make sure you have the prerequisites installed:
+  * =git=
+  * =docker-compose=
+  * =java= (8+, preferably 11+)
+
+- Get the course and code
+#+BEGIN_SRC sh
+git clone git@github.com:jypma/LB3210.git
+#+END_SRC
+
+- Try to run the demo project
+#+BEGIN_SRC sh
+cd LB3210/demo-project
+docker-compose up -d
+./mvnw spring-boot:run
+#+END_SRC
+
+- If you have time, get the code into your favorite IDE and browse around it
 * Data architecture
 ** Domain-driven design
 *** Introduction
@@ -472,43 +565,15 @@ message SearchRequest {
 - Ideal for storing events of event sourcing (if you have a lot of them)
 *** Designing for extensibility
 - Use schemes and code lists instead of fixed enumerations
+#+BEGIN_SRC xml
+<InvoiceAmount currencyID="USD">42.00</InvoiceAmount>
+#+END_SRC
+
 - Use rich data objects instead of flat numeric values
   * e.g. =Amount=, =Measurement=, =GeoCoordinate=, =Quantity=
+
 - Use namespaces and URIs where you can
-* Security architecture
-** Authentication patterns
-*** User-to-service authentication
-- I want code running on a user's computer to call me (let's assume web browser)
-- OpenID Connect, simplified flow:
-  1. /Resource owner/ wants /client/ to log on to /authorization server/
-  2. Client is redirected to authorization server
-  3. User verifies trust of authorization server and logs on
-  4. Authorization server redirects client back (with authorization code)
-  5. Client contacts resource owner with /code/
-  6. Resource owner exchanges code for /token/
-  7. Token can be used in =Authorization: Bearer= http header
-*** Service-to-service authentication
-- I want code running on other backend services to call me (outside of the context of a user)
-
-- Mutual TLS
-  * Server has a certificate, proving it's who it claims
-    + Client has established trust on a root certificate, having signed the server certificate
-  * Client has a certificate, proving it's who it claims
-    + Server has established trust on a root certificate, having signed the client certificate
-
-- In practice
-  * Create (or purchase) a root certificate for your business, lock it tight
-  * Create intermediate CAs for particular roles, e.g. for singing micro-services
-  * Use /Certificate Signing Requests/ to reflect real business flow
-  * For your service clients
-    + Have server sign client certificates directly
-    + Or, delegate to an intermediate CA, and implement whitelisting
-- Confirm that OCSP (/Online Certificate Status Protocol/) can be used to revoke certificates
-** Implementation
-*** Authorization checks
-- Prefer to keep internal to service
-- Replicate user memberships through event sourcing
-- Synchronous calls least favorable choice
+* Break
 * Software architecture
 ** Spring Boot
 *** About Spring Boot
@@ -783,6 +848,8 @@ int calculateAverage(List<Integer> items) {
   * Callback APIs
   * Parallel processing
   * Messaging
+
+[[file:graphics/multithread.jpg]]
 *** VAVR
 - Library for Java 8+ for functional programming and immutability
 - As an example, let's look at [[https://www.javadoc.io/doc/io.vavr/vavr/latest/io/vavr/collection/List.html][io.vavr.collection.List]]
@@ -878,32 +945,169 @@ Route route = path("users", () ->
 );
 #+END_SRC
 
-** TODO Streams
-- Java streams is not it
-- Use slides of future vs. callbacks vs. streams
-- Akka streams very mature, show RabbitMQ example
+* Demo project API
+** demo-project
+*** API guide
+- Follow [[file:demo-project/GUIDE.org][GUIDE.org]]
+- Browse the code, if time
+* Break(out) 3
+** Extending demo-project
+*** Let's build a chat room
+- Extend =demo-project= with a new business domain: /chat rooms/
+- Create the following new APIs:
+  * Post a message to a room (creating the room if it doesn't exist)
+#+BEGIN_SRC restclient
+PUT http://localhost:8080/rooms/myroom/messages
+Content-Type: text/plain
+
+Here's a chat message going to room "myroom"!
+
+201 Created
+#+END_SRC
+  * Get the current messages in a room
+#+BEGIN_SRC restclient
+GET http://localhost:8080/rooms/myroom/messages
+Accept: text/plain
+
+200 OK
+Content-Type: text/plain
+
+Welcome to my room!
+Here's a chat message going to room "myroom"!
+#+END_SRC
+*** Bonus points:
+  * Create a data schema migration and actually store the messages
+  * Have an API to list rooms
+  * Tie messages to users instead of anonymously
+*** Discussion
+- Let's see what everyone has come up with
+* Assignments
+** Homework
+*** Three alternatives
+- Group into teams
+- Pick the alternative that most suits you (or which you like best)
+
+  * Alternative A: Replace your monolith
+  * Alternative B: Extend an existing microservice
+  * Alternative C: Write some code for the demo project
+
+** Alternative A: Your Monolith
+*** Part one: Describe monolith
+*Target*: individual developers, or developers that have worked on the same monolith.
+Groups of 1-4
+
+- Pick a recent project where you have worked on a /monolith/. The bigger the better.
+- Create a (rough) sketch that depicts the monolith the most important other systems it communicates with
+  * Include both clients and dependencies
+  * Include data stores and queues
+  * Include cloud-based services
+  * For each interface, describe (generally) which protocol or format is used, how often it's used, and the size of messages
+- Create a (rough) sketch that depicts the monolith, its internal structure, and the team(s) changing those parts
+  * Try to include the size of teams and how often they perform changes
+*** Part two: Microservice design
+- Using the techniques from this course, draw a set of candidate microservices that can take over part(s) of the monolith
+  * Which business domains
+  * What APIs
+  * Which data stores
+** Alternative B: Your Microservice
+- Target: individual developer, or developers that have been on a (small) service together.
+*** Part one: architectural description
+- Create a (rough) sketch that depicts the service the most important other systems it communicates with
+  * Include both clients and dependencies
+  * Include data stores and queues
+  * Include cloud-based services
+  * For each interface, describe (generally) which protocol or format is used, how often it's used, and the size of messages
+- Create a (rough) sketch that depicts the service, its internal structure, and the team(s) changing those parts
+  * Try to include the size of teams and how often they perform changes
+*** Part two: non-functional extensions
+- What do we change in our architecture if we expect (separately):
+  * 100x as many concurrent users
+  * 1000x the size (in bytes) of incoming requests
+  * 10.000x the amount of stored data
+** Alternative C: Extend demo project
+*** Finish the chat
+Suggestions:
+  * Create a data schema migration and actually store the messages
+  * Have an API to list rooms
+  * Tie messages to users instead of anonymously
+  * Add a bulkhead around some APIs
+  * Remove single points of failure
+  * Typing notifications
+
 * Wrapping up today
 ** Let's do another round
-*** Please share
-- This I already knew
-- This I learned today
+*** Please share!
+- Name one thing that you learned
+- Name one thing that you knew already
+- Name one thing that surprised you
 * Start of day 2
 ** Getting started
 *** Schedule, Day 2
-|  Time | Duration | Activity                                     |
-|-------+----------+----------------------------------------------|
-| 13:00 |    00:10 | Welcome, Outline/Agenda                      |
-| 13:10 |    00:40 | Homework presentations (6 teams, 5 min each) |
-| 13:50 |    00:10 | Recap of day 1                               |
-|-------+----------+----------------------------------------------|
-| 14:00 |    00:05 | Break                                        |
-|-------+----------+----------------------------------------------|
-| 14:05 |    00:30 | Strategy and team dynamics                   |
-| 14:35 |    00:30 | Getting your service used                    |
-| 15:05 |          |                                              |
+|  Time | Duration | Activity                                                                   | Weight |
+|-------+----------+----------------------------------------------------------------------------+--------|
+| 13:00 |    00:10 | Welcome, Outline/Agenda                                                    |        |
+| 13:10 |    00:40 | Homework presentations (4 teams, 8 min each)                               |        |
+| 13:50 |    00:10 | Recap of day 1                                                             |        |
+|-------+----------+----------------------------------------------------------------------------+--------|
+| 14:00 |    00:05 | Break                                                                      |        |
+|-------+----------+----------------------------------------------------------------------------+--------|
+| 14:05 |    00:20 | Getting your service used                                                  |     10 |
+| 14:25 |    00:45 | REST patterns                                                              |     24 |
+|-------+----------+----------------------------------------------------------------------------+--------|
+| 15:10 |    00:30 | Breakout 4: Apply REST patterns (invoice case, write RAML API)             |        |
+|-------+----------+----------------------------------------------------------------------------+--------|
+| 15:40 |    00:20 | Microservice life cycle                                                    |     12 |
+| 16:00 |    00:10 | Security architecture                                                      |      5 |
+| 16:10 |    00:10 | Discussions of REST results                                                |        |
+| 16:20 |    00:15 | Strategy and team dynamics                                                 |      4 |
+| 16:35 |    00:40 | Asynchronous Java                                                          |     22 |
+|-------+----------+----------------------------------------------------------------------------+--------|
+| 17:15 |    00:55 | Breakout 5: Write async Java & food                                        |        |
+| 18:10 |          | Directory crawler. Find "key=value" matches. Call demo app to store in DB. |        |
+|-------+----------+----------------------------------------------------------------------------+--------|
+| 18:10 |    00:30 | Presentations of async Java                                                |        |
+| 18:40 |    00:20 | Wrap-up, reserved time for extra subjects                                  |        |
 #+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
+*** Recap of day 1
+- Keyword cloud here
 
+Who can tell us something about:
 
+[[file:graphics/svg/wordcloud.png]]
+* Security architecture
+** Authentication patterns
+*** User-to-service authentication
+- I want code running on a user's computer to call me (let's assume web browser)
+- OpenID Connect, simplified flow:
+  1. /Resource owner/ wants /client/ to log on to /authorization server/
+  2. Client is redirected to authorization server
+  3. User verifies trust of authorization server and logs on
+  4. Authorization server redirects client back (with authorization code)
+  5. Client contacts resource owner with /code/
+  6. Resource owner exchanges code for /token/
+  7. Token can be used in =Authorization: Bearer= http header
+*** Service-to-service authentication
+- I want code running on other backend services to call me (outside of the context of a user)
+
+- Mutual TLS
+  * Server has a certificate, proving it's who it claims
+    + Client has established trust on a root certificate, having signed the server certificate
+  * Client has a certificate, proving it's who it claims
+    + Server has established trust on a root certificate, having signed the client certificate
+
+- In practice
+  * Create (or purchase) a root certificate for your business, lock it tight
+  * Create intermediate CAs for particular roles, e.g. for singing micro-services
+  * Use /Certificate Signing Requests/ to reflect real business flow
+  * For your service clients
+    + Have server sign client certificates directly
+    + Or, delegate to an intermediate CA, and implement whitelisting
+- Confirm that OCSP (/Online Certificate Status Protocol/) can be used to revoke certificates
+** Implementation
+*** Authorization checks
+- Prefer to keep internal to service
+- Replicate user memberships through event sourcing
+- Synchronous calls least favorable choice
 * Micro service life cycle
 ** Dependency management
 *** Developing a new service
@@ -931,6 +1135,8 @@ Route route = path("users", () ->
 - Feature flag
 - A/B testing
 ** Testing
+*** Unit tests OK, Integration tests not
+[[xdg:graphics/tests.mp4]]
 *** Introducing bugs
 - Rate of bugs introduced into systems are a function of
   * Developer experience
@@ -965,23 +1171,6 @@ Route route = path("users", () ->
   * Rollbacks are a pain
   * Your next deploy is only minutes away
   * Emergencies should be rare (testing, early release, multiple environments)
-* Strategy and team dynamics
-** Succeeding with microservices
-*** Microservices and agile
-- Embrace change
-- Team visibility
-- Stakeholder support
-- Team(s) in same time zone as stakeholders (which includes users)
-  * Distributed users? distributed team!
-*** Migrating your monolith
-- Chainsaw anti-pattern
-- Strangler pattern
-- Maven modules
-*** Do we need a separate dev/ops team? (no)
-- Automate everything (rolling production deploy)
-- Deploy in the morning, monitor your dashboards
-- However, "infra tooling" or "platform" team can be helpful
-- The same holds for the "DBA" team
 * A selection of REST patterns
 ** Resource tags and caching
 *** Resources have versions
@@ -1184,6 +1373,23 @@ GET http://localhost/service/versions/1/myresource
 - This does kinda work
 
 - Fairly weak way to work around /actually/ dealing with semantic changes and compatibility
+* Strategy and team dynamics
+** Succeeding with microservices
+*** Microservices and agile
+- Embrace change
+- Team visibility
+- Stakeholder support
+- Team(s) in same time zone as stakeholders (which includes users)
+  * Distributed users? distributed team!
+*** Migrating your monolith
+- Chainsaw anti-pattern
+- Strangler pattern
+- Maven modules
+*** Do we need a separate dev/ops team? (no)
+- Automate everything (rolling production deploy)
+- Deploy in the morning, monitor your dashboards
+- However, "infra tooling" or "platform" team can be helpful
+- The same holds for the "DBA" team
 * Getting your service used
 ** Public API 
 *** An API is an interface
@@ -1239,48 +1445,18 @@ GET http://localhost/service/versions/1/myresource
 - For each environment, after a few days examine the graphs
   * Establish a baseline, and create an alert for /each/ metric
 * Bonus: Asynchronous Java
-* Assignments
-** Assignment A
-- Target: individual developer, or developers that have worked on the same monolith.
-*** Part one: architectural description [4 hours]
-- Pick a recent project where you have worked on a /monolith/. The bigger the better.
-- Create a (rough) sketch that depicts the monolith the most important other systems it communicates with
-  * Include both clients and dependencies
-  * Include data stores and queues
-  * Include cloud-based services
-  * For each interface, describe (generally) which protocol or format is used, how often it's used, and the size of messages
-- Create a (rough) sketch that depicts the monolith, its internal structure, and the team(s) changing those parts
-  * Try to include the size of teams and how often they perform changes
-- Create a (rough) timeline that shows how a typical new feature finds its way from inception to being in production
-  * Include testing in various contexts, customer meetings, and other forms of feedback
-*** Part two: microservice design
-- Using the techniques from this course, draw a set of candidate microservices that can take over part(s) of the monolith
-- 
-** Assignment B
-- Target: individual developer, or developers that have been on a green-field project together.
-*** Part one: architectural description [1 hour]
-*** Part two: non-functional extensions
-
-** Assignment: Extend demo project
-*** To be designed
-- Change configuration to YAML
-- Try to run application from a docker container
-- Add a domain model (as per DDD) to the demo-project
-
-*** Other assignment ideas
-- Take your service, and see how testing works. Are you missing layers? how many tests of each do you have?
-
 * Interesting links
 https://world.hey.com/joaoqalves/disasters-i-ve-seen-in-a-microservices-world-a9137a51
 https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
 
 * Notes
-- Export both to beamer and plain PDF
-- Test with external monitor
-- Extra topics
-  - Streaming in-depth with Akka and Akka-http
+- Add rabbitMQ stream example
+- Pure function example (split up business logic and side effects)
+- Screen sharing of others??
+
 - Practice inkscape freehand drawing and shortcuts
 - Light theme
 - Example DDD class diagram
-
-- Pure function example
+- Draw the UML diagram from https://developer.okta.com/blog/2019/08/22/okta-authjs-pkce
+- Add HTTP cats https://http.cat/401
+- Add comics
