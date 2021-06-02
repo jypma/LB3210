@@ -1,6 +1,9 @@
 package com.example.demoproject;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -77,6 +80,29 @@ public class DemoController {
     @GetMapping("/values")
     List<FlywayTest> all() {
         return inRepoTransaction(r -> r.list()).toJavaList();
+    }
+
+    private static Map<String, List<String>> rooms = new HashMap<String, List<String>>();
+
+    @PostMapping("/chat/{room}/messages")
+    public ResponseEntity<?> create(@PathVariable("room") String room, @RequestBody String message) {
+
+        if (rooms.get(room)==null) {
+            rooms.put(room, new ArrayList<String>());
+        }
+        var messages = rooms.get(room);
+        messages.add(message);
+        sendToQueue("Got message: " + message);
+        System.out.println("Got message!");
+        // We return the body back in this example, but it's more common to respond
+        // with an empty body for a POST-to-create. In that case, just say
+        // ResponseEntity.created(uri).build().
+        return ResponseEntity.ok("posted message");
+    }
+
+    @GetMapping("/chat/{room}/messages")
+    List<String> allMessages(@PathVariable("room") String room) {
+        return rooms.get(room);
     }
 
     @PostMapping("/values")

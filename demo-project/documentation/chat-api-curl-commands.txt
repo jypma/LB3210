@@ -1,0 +1,10 @@
+Get all chat rooms:
+curl --location --request GET 'localhost:8080/rooms'
+
+Post a new message to room 'home':
+curl --location --request POST 'localhost:8080/rooms/home/messages' \
+--header 'Content-Type: text/plain' \
+--data-raw 'hello, this is a message'
+
+Get messages for room 'home':
+curl --location --request GET 'http://localhost:8080/rooms/home/messages'
