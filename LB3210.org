@@ -9,6 +9,9 @@
 [[file:graphics/microservices.png]]
 *** This course
 
+
+[[file:graphics/lb-logo_stort_1363x359.jpg]]
+
 Freely available here:
 [[https://github.com/jypma/LB3210][https://github.com/jypma/LB3210]]
 
@@ -29,7 +32,6 @@ Freely available here:
  * Experience with Java/Jakarta EE and Spring (Boot)
  * Likes Kotlin and elegant programs
  * jakob@logb.dk, https://linkedin.com/in/jbendsen
-[[file:graphics/lb-logo_stort_1363x359.jpg]]
 
 
 *** Schedule, day 1
@@ -147,6 +149,7 @@ Half_Open -> Open : [failure rate above threshold]
 
 #+RESULTS:
 [[file:graphics/circuit-breaker-state.png]]
+
 ** Guidelines
 *** Microservice pitfalls
 - Service co-dependencies
@@ -165,7 +168,7 @@ Half_Open -> Open : [failure rate above threshold]
 ** Service discovery
 *** Introduction
 - Break into teams of 2-4 people (20 min)
-
+http://github.com/jypma/LB3210
 - Discuss the services and projects you've been a part of, and identify:
   * Examples of a microservice
   * Examples of /definitely NOT/ a microservice
@@ -423,11 +426,16 @@ This course, and its accompanying Spring Boot demo project, are on github.
 - Make sure you have the prerequisites installed:
   * =git=
   * =docker-compose=
+  * =maven=
   * =java= (8+, preferably 11+)
 
 - Get the course and code
 #+BEGIN_SRC sh
 git clone git@github.com:jypma/LB3210.git
+#+END_SRC
+/OR/
+#+BEGIN_SRC sh
+git clone https://github.com/jypma/LB3210.git
 #+END_SRC
 
 - Try to run the demo project
@@ -510,6 +518,10 @@ docker-compose up -d
  xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
  <cbc:ID>42</cbc:ID>
  <cbc:IssueDate>2004-05-24</cbc:IssueDate>
+ <cac:InvoiceLine>...</cac:InvoiceLine>
+ <cac:InvoiceLine>...</cac:InvoiceLine>
+ <cac:InvoiceLine>...</cac:InvoiceLine>
+ <cbc:ShoeSize/>
  <cac:LegalMonetaryTotal>
   <cbc:PayableAmount currencyID="USD">52.00</cbc:PayableAmount>
  </cac:LegalMonetaryTotal>
@@ -606,6 +618,14 @@ public class LambdaDemo {
 
     public static void main(String[] args) {
         int result = twice(10, i -> i + 1);
+
+        /*
+        int result = twice(10, new MathOp() {
+                public int apply(int input) {
+                    return input + 1;
+                }
+            });
+            */
         System.out.println(result);
     }
 }
@@ -613,6 +633,7 @@ public class LambdaDemo {
 
 #+RESULTS:
 : 12
+
 *** Function types (Java 8+)
 - For use with lambdas, Java added a few /Functional Interfaces/ in [[https://docs.oracle.com/javase/8/docs/api/java/util/function/package-summary.html][java.util.function]]
 #+BEGIN_SRC java
@@ -797,6 +818,7 @@ class Transactional {
 *** Lambdas as control constructs (contd.)
 - Now we can wrap a lambda and get a transaction around the block
 #+BEGIN_SRC java
+
 void updateUser(String name, String pet) {
     inTransaction(conn -> {
         validatePetName(conn, pet);
@@ -957,24 +979,44 @@ Route route = path("users", () ->
 - Create the following new APIs:
   * Post a message to a room (creating the room if it doesn't exist)
 #+BEGIN_SRC restclient
-PUT http://localhost:8080/rooms/myroom/messages
+POST http://localhost:8080/rooms/myroom/messages
 Content-Type: text/plain
 
 Here's a chat message going to room "myroom"!
-
-201 Created
 #+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC js
+// POST http://localhost:8080/rooms/myroom/messages
+// HTTP/1.1 201
+// Location: http://localhost:8080/rooms/myroom/messages
+// Content-Length: 0
+// Date: Mon, 31 May 2021 16:11:07 GMT
+// Keep-Alive: timeout=60
+// Connection: keep-alive
+// Request duration: 0.005855s
+#+END_SRC
+
   * Get the current messages in a room
 #+BEGIN_SRC restclient
 GET http://localhost:8080/rooms/myroom/messages
 Accept: text/plain
-
-200 OK
-Content-Type: text/plain
-
-Welcome to my room!
-Here's a chat message going to room "myroom"!
 #+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC text
+Here's a chat message going to room "myroom"!
+Here's a chat message going to room "myroom"!
+GET http://localhost:8080/rooms/myroom/messages
+HTTP/1.1 200
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 91
+Date: Mon, 31 May 2021 16:11:11 GMT
+Keep-Alive: timeout=60
+Connection: keep-alive
+Request duration: 0.019415s
+#+END_SRC
+
 *** Bonus points:
   * Create a data schema migration and actually store the messages
   * Have an API to list rooms
@@ -1046,131 +1088,96 @@ Suggestions:
 |  Time | Duration | Activity                                                                   | Weight |
 |-------+----------+----------------------------------------------------------------------------+--------|
 | 13:00 |    00:10 | Welcome, Outline/Agenda                                                    |        |
-| 13:10 |    00:40 | Homework presentations (4 teams, 8 min each)                               |        |
-| 13:50 |    00:10 | Recap of day 1                                                             |        |
+| 13:10 |    00:10 | Recap of day 1                                                             |        |
+| 13:20 |    00:40 | Homework presentations (4 teams, 8 min each)                               |        |
 |-------+----------+----------------------------------------------------------------------------+--------|
-| 14:00 |    00:05 | Break                                                                      |        |
+| 14:00 |    00:10 | Break                                                                      |        |
 |-------+----------+----------------------------------------------------------------------------+--------|
-| 14:05 |    00:20 | Getting your service used                                                  |     10 |
-| 14:25 |    00:45 | REST patterns                                                              |     24 |
+| 14:10 |    00:20 | Getting your service used                                                  |     10 |
+| 14:30 |    00:45 | REST patterns                                                              |     24 |
 |-------+----------+----------------------------------------------------------------------------+--------|
-| 15:10 |    00:30 | Breakout 4: Apply REST patterns (invoice case, write RAML API)             |        |
+| 15:15 |    00:30 | Breakout 4                                                                 |        |
 |-------+----------+----------------------------------------------------------------------------+--------|
-| 15:40 |    00:20 | Microservice life cycle                                                    |     12 |
-| 16:00 |    00:10 | Security architecture                                                      |      5 |
-| 16:10 |    00:10 | Discussions of REST results                                                |        |
-| 16:20 |    00:15 | Strategy and team dynamics                                                 |      4 |
-| 16:35 |    00:40 | Asynchronous Java                                                          |     22 |
+| 15:45 |    00:10 | Discussions of REST results                                                |        |
+| 15:55 |    00:20 | Microservice life cycle                                                    |     12 |
+| 16:15 |    00:10 | Security architecture                                                      |      5 |
+| 16:25 |    00:15 | Strategy and team dynamics                                                 |      4 |
+| 16:40 |    00:40 | Asynchronous Java                                                          |     22 |
 |-------+----------+----------------------------------------------------------------------------+--------|
-| 17:15 |    00:55 | Breakout 5: Write async Java & food                                        |        |
-| 18:10 |          | Directory crawler. Find "key=value" matches. Call demo app to store in DB. |        |
+| 17:20 |    00:55 | Breakout 5: Write async Java & food                                        |        |
+| 18:15 |          | Directory crawler. Find "key=value" matches. Call demo app to store in DB. |        |
 |-------+----------+----------------------------------------------------------------------------+--------|
-| 18:10 |    00:30 | Presentations of async Java                                                |        |
-| 18:40 |    00:20 | Wrap-up, reserved time for extra subjects                                  |        |
-#+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
+| 18:15 |    00:30 | Presentations of async Java                                                |        |
+| 18:45 |    00:15 | Wrap-up, reserved time for extra subjects                                  |        |
+#+TBLFM: @4$1..@>$1=@-1$2+@-1$1;U
 *** Recap of day 1
-- Keyword cloud here
 
 Who can tell us something about:
 
 [[file:graphics/svg/wordcloud.png]]
-* Security architecture
-** Authentication patterns
-*** User-to-service authentication
-- I want code running on a user's computer to call me (let's assume web browser)
-- OpenID Connect, simplified flow:
-  1. /Resource owner/ wants /client/ to log on to /authorization server/
-  2. Client is redirected to authorization server
-  3. User verifies trust of authorization server and logs on
-  4. Authorization server redirects client back (with authorization code)
-  5. Client contacts resource owner with /code/
-  6. Resource owner exchanges code for /token/
-  7. Token can be used in =Authorization: Bearer= http header
-*** Service-to-service authentication
-- I want code running on other backend services to call me (outside of the context of a user)
+*** Homework presentations
 
-- Mutual TLS
-  * Server has a certificate, proving it's who it claims
-    + Client has established trust on a root certificate, having signed the server certificate
-  * Client has a certificate, proving it's who it claims
-    + Server has established trust on a root certificate, having signed the client certificate
+- Share your services (and/or code) with us!
 
-- In practice
-  * Create (or purchase) a root certificate for your business, lock it tight
-  * Create intermediate CAs for particular roles, e.g. for singing micro-services
-  * Use /Certificate Signing Requests/ to reflect real business flow
-  * For your service clients
-    + Have server sign client certificates directly
-    + Or, delegate to an intermediate CA, and implement whitelisting
-- Confirm that OCSP (/Online Certificate Status Protocol/) can be used to revoke certificates
-** Implementation
-*** Authorization checks
-- Prefer to keep internal to service
-- Replicate user memberships through event sourcing
-- Synchronous calls least favorable choice
-* Micro service life cycle
-** Dependency management
-*** Developing a new service
-- I want to write a new micro service! 
-  * I need a database, a queue, the filesystem for some caching
-  * Oh, and I'm talking to twitters API, and our home-grown analytics API
+*** Break
 
-- How do I deal with these dependencies during day-to-day development?
-  * "Leaf" dependencies: often OK to run directly (e.g. data stores)
-  * "Node" dependencies (other microservices): often have dependencies of their own
-    + You know its API, right?
-    + Mock it! Wiremock, or any simple http server
+- Make sure to get the latest project changes:
+  * =git pull= to get latest updates
 
-*** Running dependencies
-  * Maintain a =docker-compose= file for your project
-    + Real dependencies: they're probably on =docker-hub= already
-    + Mocks: use the =build= feature if needed
-  * New developers can get started instantly
+* Getting your service used
+** Public API
+*** An API is an interface
+- /Application Programming Interface/
+  * It's how external components affect what our service does
+  * Better lay down some rules
+- But our service is only used by our team, we don't need documentation!
+- Ideal for test-first development
+- Where do I put my private API?
+*** Example API
+- Let's look at an [[file:demo-project/documentation/demo-api.html][example API]] example API together
+  * Its [[file:demo-project/documentation/demo-api.raml][RAML source]] is available
+- Semantic format for describing REST APIs: RAML, OpenAPI
+  * RAML: YAML-based, more advanced, easier to write by hand
+  * OpenAPI: JSON-based, more tooling support
+*** Content-type negotiation
+- Embrace content-type negotiation (XML /and/ JSON, not XML /or/ JSON)
+- XML API:
+  * Do create XSD for your data types, but communicate how it should be interpreted
+  * Do you reserve the right to add new tags and attributes?
+- JSON API:
+  * Create JSON schemas for everything
+  * In addition, verbosely describe all numeric types and their intended usage
 
-** Extending a service
-*** Developing a new feature
-- Don't hide your new feature on a branch
-- Release early and often
-  * But only activate it in certain environments and/or users
-- Feature flag
-- A/B testing
-** Testing
-*** Unit tests OK, Integration tests not
-[[xdg:graphics/tests.mp4]]
-*** Introducing bugs
-- Rate of bugs introduced into systems are a function of
-  * Developer experience
-  * Development environment (physical and technological)
-  * Methodology
+** Public developer guide
+*** But I've written the documentation!
+- Just a list of endpoints may not be enough for some developers
+- Lot of context and assumed knowledge
+  * Ubiquitous language may not extend to all new API users
+  * Lack of experience with JSON, XML, HTTP headers
+*** Different people, different learning styles
+- Write a developer guide that describes typical scenarios from a user's perspective
+  * How to get started (e.g. get an SSL certificate)
+  * How to list widgets in XML or JSON
+  * How to create a new widget
+- There's no shame in taking an English technical writing course
+- Pick tooling that suits your way of working (e.g. =HTTPie=, =org-mode= with =org-babel=, ...)
+** Public service dashboard
+*** Priorities!
+- What's the first thing you do when you get to your office?
 
-*** Finding bugs
-- Fixing bugs is more expensive, the later they are found
-  * While writing code: just think of different solution
-  * While code is in review: communication, context switch, and the above
-  * While code is in user testing: (much) more communication, context switch, and all the above
-  * After code is released: (even) more communication, impact analysis in data, and all the above
+- Users will be curious about your service status
+  * If your users are internal, give them access to the actual dashboard
+  * In fact, consider giving them access to your source code and issue tracker as well
+*** Designing your dashboard
+- Your dashboard should be showing
+  * System metrics (load average, disk space, CPU usage, memory usage, network I/O, disk I/O)
+  * Your process' metrics (CPU usage, memory usage)
+  * Your JVM's metrics (Heap committed, heap used, GC time, thread count, log4j count)
+  * Your framework's metrics (HTTP server open connections, HTTP client open connections, response times, response errors)
+  * Your business metrics (number of pets signed up, total invoice amount, size of received chat messages)
 
-*** Preventing bugs
-- Test at different layers
-  * On code itself: Pair programming
-  * On one unit (e.g. class): /Unit tests/. Run in seconds.
-  * On one service (e.g. rest API): /Component tests/. Run in tens of seconds.
-  * On a suite of services (e.g. UI): /End-to-end tests/. Run in minutes.
-  * On your entire infrastructure: /Smoke tests/. Run periodically, on production, with external dependencies
-** Deployment
-*** Getting your service out there
-    "/All software has a test environment. Some software is lucky to have a separate production environment as well."/
-        - unknown
-*** Doing deployments
-- Automate the environments themselves (=terraform=, =vagrant=, ...)
-- All deployments to all environments must be automated
-- It's OK to have gatekeepers, e.g.
-  * After a PR is merged, automatic deploys are done to =dev= and =test= environments
-  * The =prod= environment requires a manual button press
-- Forward deploy only
-  * Rollbacks are a pain
-  * Your next deploy is only minutes away
-  * Emergencies should be rare (testing, early release, multiple environments)
+- For each environment, after a few days examine the graphs
+  * Establish a baseline, and create an alert for /each/ metric
 * A selection of REST patterns
 ** Resource tags and caching
 *** Resources have versions
@@ -1373,6 +1380,121 @@ GET http://localhost/service/versions/1/myresource
 - This does kinda work
 
 - Fairly weak way to work around /actually/ dealing with semantic changes and compatibility
+* Break(out) 4
+** Designing an API
+*** Write a RAML file for an invoicing API
+- We're writing an invoicing service, that can send and receive invoices between companies
+
+- We need APIs to:
+  * Send an invoice
+  * Read back previously-sent invoices
+  * Check if we have received any invoices, and
+  * Read received invoices
+
+- You don't have to design an invoice format
+  * You can assume they're plain text or PDF, if you want
+
+- View [[file:demo-project/documentation/demo-api.raml]] if you need an example RAML file
+- Hints:
+  * RAML documentation and on-line editor: https://raml.org/
+  * RAML 1.0 spec: https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md/
+* Micro service life cycle
+** Dependency management
+*** Developing a new service
+- I want to write a new micro service!
+  * I need a database, a queue, the filesystem for some caching
+  * Oh, and I'm talking to twitters API, and our home-grown analytics API
+
+- How do I deal with these dependencies during day-to-day development?
+  * "Leaf" dependencies: often OK to run directly (e.g. data stores)
+  * "Node" dependencies (other microservices): often have dependencies of their own
+    + You know its API, right?
+    + Mock it! Wiremock, or any simple http server
+
+*** Running dependencies
+  * Maintain a =docker-compose= file for your project
+    + Real dependencies: they're probably on =docker-hub= already
+    + Mocks: use the =build= feature if needed
+  * New developers can get started instantly
+
+** Extending a service
+*** Developing a new feature
+- Don't hide your new feature on a branch
+- Release early and often
+  * But only activate it in certain environments and/or users
+- Feature flag
+- A/B testing
+** Testing
+*** Unit tests OK, Integration tests not
+[[file:graphics/tests.mp4]]
+*** Introducing bugs
+- Rate of bugs introduced into systems are a function of
+  * Developer experience
+  * Development environment (physical and technological)
+  * Methodology
+
+*** Finding bugs
+- Fixing bugs is more expensive, the later they are found
+  * While writing code: just think of different solution
+  * While code is in review: communication, context switch, and the above
+  * While code is in user testing: (much) more communication, context switch, and all the above
+  * After code is released: (even) more communication, impact analysis in data, and all the above
+
+*** Preventing bugs
+- Test at different layers
+  * On code itself: Pair programming
+  * On one unit (e.g. class): /Unit tests/. Run in seconds.
+  * On one service (e.g. rest API): /Component tests/. Run in tens of seconds.
+  * On a suite of services (e.g. UI): /End-to-end tests/. Run in minutes.
+  * On your entire infrastructure: /Smoke tests/. Run periodically, on production, with external dependencies
+** Deployment
+*** Getting your service out there
+    "/All software has a test environment. Some software is lucky to have a separate production environment as well."/
+        - unknown
+*** Doing deployments
+- Automate the environments themselves (=terraform=, =vagrant=, ...)
+- All deployments to all environments must be automated
+- It's OK to have gatekeepers, e.g.
+  * After a PR is merged, automatic deploys are done to =dev= and =test= environments
+  * The =prod= environment requires a manual button press
+- Forward deploy only
+  * Rollbacks are a pain
+  * Your next deploy is only minutes away
+  * Emergencies should be rare (testing, early release, multiple environments)
+* Security architecture
+** Authentication patterns
+*** User-to-service authentication
+- I want code running on a user's computer to call me (let's assume web browser)
+- OpenID Connect, simplified flow:
+  1. /Resource owner/ wants /client/ to log on to /authorization server/
+  2. Client is redirected to authorization server
+  3. User verifies trust of authorization server and logs on
+  4. Authorization server redirects client back (with authorization code)
+  5. Client contacts resource owner with /code/
+  6. Resource owner exchanges code for /token/
+  7. Token can be used in =Authorization: Bearer= http header
+*** Service-to-service authentication
+- I want code running on other backend services to call me (outside of the context of a user)
+
+- Mutual TLS
+  * Server has a certificate, proving it's who it claims
+    + Client has established trust on a root certificate, having signed the server certificate
+  * Client has a certificate, proving it's who it claims
+    + Server has established trust on a root certificate, having signed the client certificate
+
+- In practice
+  * Create (or purchase) a root certificate for your business, lock it tight
+  * Create intermediate CAs for particular roles, e.g. for singing micro-services
+  * Use /Certificate Signing Requests/ to reflect real business flow
+  * For your service clients
+    + Have server sign client certificates directly
+    + Or, delegate to an intermediate CA, and implement whitelisting
+- Confirm that OCSP (/Online Certificate Status Protocol/) can be used to revoke certificates
+** Implementation
+*** Authorization checks
+- Prefer to keep internal to service
+- Replicate user memberships through event sourcing
+- Synchronous calls least favorable choice
 * Strategy and team dynamics
 ** Succeeding with microservices
 *** Microservices and agile
@@ -1390,61 +1512,35 @@ GET http://localhost/service/versions/1/myresource
 - Deploy in the morning, monitor your dashboards
 - However, "infra tooling" or "platform" team can be helpful
 - The same holds for the "DBA" team
-* Getting your service used
-** Public API 
-*** An API is an interface
-- /Application Programming Interface/
-  * It's how external components affect what our service does
-  * Better lay down some rules
-- But our service is only used by our team, we don't need documentation!
-- Ideal for test-first development
-- Where do I put my private API?
-*** Example API
-- Let's look at an [[file:demo-project/documentation/demo-api.html][example API]] example API together
-  * Its [[file:demo-project/documentation/demo-api.raml][RAML source]] is available
-- Semantic format for describing REST APIs: RAML, OpenAPI
-  * RAML: YAML-based, more advanced, easier to write by hand
-  * OpenAPI: JSON-based, more tooling support
-*** Content-type negotiation
-- Embrace content-type negotiation (XML /and/ JSON, not XML /or/ JSON)
-- XML API:
-  * Do create XSD for your data types, but communicate how it should be interpreted
-  * Do you reserve the right to add new tags and attributes?
-- JSON API:
-  * Create JSON schemas for everything
-  * In addition, verbosely describe all numeric types and their intended usage
+* Asynchronous Java
+** Live demo
+*** Link
+Follow [[file:demo-project/GUIDE.org]]
+* Break(out) 5
+** Streams
+*** A directory crawler
+- Let's put our =demo-project= to some good use
 
-** Public developer guide
-*** But I've written the documentation!
-- Just a list of endpoints may not be enough for some developers
-- Lot of context and assumed knowledge
-  * Ubiquitous language may not extend to all new API users
-  * Lack of experience with JSON, XML, HTTP headers
-*** Different people, different learning styles
-- Write a developer guide that describes typical scenarios from a user's perspective
-  * How to get started (e.g. get an SSL certificate)
-  * How to list widgets in XML or JSON
-  * How to create a new widget
-- There's no shame in taking an English technical writing course
-- Pick tooling that suits your way of working (e.g. =HTTPie=, =org-mode= with =org-babel=, ...)
-** Public service dashboard
-*** Priorities!
-- What's the first thing you do when you get to your office?
+- Using asynchronous Java techniques (e.g. akka streams), write a program that concurrently:
+  * Recursively looks at the contents of all files under the current path
+  * Looks for lines matching =somekey=somevalue=
+  * Prints them
 
-- Users will be curious about your service status
-  * If your users are internal, give them access to the actual dashboard
-  * In fact, consider giving them access to your source code and issue tracker as well
-*** Designing your dashboard
-- Your dashboard should be showing
-  * System metrics (load average, disk space, CPU usage, memory usage, network I/O, disk I/O)
-  * Your process' metrics (CPU usage, memory usage)
-  * Your JVM's metrics (Heap committed, heap used, GC time, thread count, log4j count)
-  * Your framework's metrics (HTTP server open connections, HTTP client open connections, response times, response errors)
-  * Your business metrics (number of pets signed up, total invoice amount, size of received chat messages)
+- Then, extend your program to additionally:
+  * Add them to our =demo-project='s database by its REST API
+    + =POST http://localhost:8080/values=
 
-- For each environment, after a few days examine the graphs
-  * Establish a baseline, and create an alert for /each/ metric
-* Bonus: Asynchronous Java
+- Some tips:
+  * List files: https://doc.akka.io/docs/alpakka/current/file.html#listing-directory-contents
+  * Read a file's contents: https://doc.akka.io/docs/akka/current/stream/stream-io.html#streaming-file-io
+  * Make http request
+    + Spring: https://docs.spring.io/spring-android/docs/current/reference/html/rest-template.html
+    + Akka: https://doc.akka.io/docs/alpakka/current/file.html#listing-directory-contents
+  * Run a specific Java main class:
+#+BEGIN_SRC sh
+mvn exec:java -Dexec.mainClass="com.example.Main"
+#+END_SRC
+
 * Interesting links
 https://world.hey.com/joaoqalves/disasters-i-ve-seen-in-a-microservices-world-a9137a51
 https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
