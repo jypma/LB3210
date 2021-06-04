@@ -1,5 +1,6 @@
 #+TITLE: Demo project development guide
 #+PROPERTY: header-args:elisp :results silent
+#+PROPERTY: header-args:plantuml :exports results :var _dpi_="150"
 
 * COMMENT Document maintainance (not presented)
 ** COMMENT Remove all results
@@ -17,6 +18,28 @@ The application exposes a REST API on port 8080 when run. Let's first investigat
 
 #+BEGIN_SRC restclient
 GET http://localhost:8080
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC js
+{
+  "timestamp": "2021-05-31T15:07:00.660+00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "",
+  "path": "/"
+}
+// GET http://localhost:8080
+// HTTP/1.1 404
+// Vary: Origin
+// Vary: Access-Control-Request-Method
+// Vary: Access-Control-Request-Headers
+// Content-Type: application/json
+// Transfer-Encoding: chunked
+// Date: Mon, 31 May 2021 15:07:00 GMT
+// Keep-Alive: timeout=60
+// Connection: keep-alive
+// Request duration: 0.168046s
 #+END_SRC
 
 ** Listing objects
@@ -48,16 +71,21 @@ GET http://localhost:8080/values
     "key": "foo",
     "value": "bar",
     "id": 4
+  },
+  {
+    "key": "foo",
+    "value": "newvalue",
+    "id": 5
   }
 ]
 // GET http://localhost:8080/values
-// HTTP/1.1 200 
+// HTTP/1.1 200
 // Content-Type: application/json
 // Transfer-Encoding: chunked
-// Date: Wed, 12 May 2021 11:39:40 GMT
+// Date: Mon, 31 May 2021 15:12:00 GMT
 // Keep-Alive: timeout=60
 // Connection: keep-alive
-// Request duration: 0.299785s
+// Request duration: 0.008222s
 #+END_SRC
 
 ** Creating an object
@@ -67,27 +95,27 @@ POST http://localhost:8080/values
 Content-Type: application/json
 
 {
-  "key": "foo",
-  "value": "bar",
+  "key": "lb",
+  "value": "idag"
 }
 #+END_SRC
 
 #+RESULTS:
 #+BEGIN_SRC js
 {
-  "key": "foo",
-  "value": "bar",
-  "id": 3
+  "key": "lb",
+  "value": "idag",
+  "id": 5
 }
 // POST http://localhost:8080/values
-// HTTP/1.1 201 
-// Location: http://localhost:8080/values/3
+// HTTP/1.1 201
+// Location: http://localhost:8080/values/5
 // Content-Type: application/json
 // Transfer-Encoding: chunked
-// Date: Wed, 12 May 2021 10:38:08 GMT
+// Date: Mon, 31 May 2021 15:08:10 GMT
 // Keep-Alive: timeout=60
 // Connection: keep-alive
-// Request duration: 0.189889s
+// Request duration: 0.092812s
 #+END_SRC
 *** ID is created by the service
 When using  =POST= to create, we can't pick our own ID:
@@ -125,7 +153,7 @@ Content-Type: application/json
 In case we change out mind, we can =PUT= an update to the object, on the URI we got back for its creation (in the =Location= header).
 
 #+BEGIN_SRC restclient
-PUT http://localhost:8080/values/1
+PUT http://localhost:8080/values/5
 Content-Type: application/json
 
 {
@@ -136,12 +164,12 @@ Content-Type: application/json
 
 #+RESULTS:
 #+BEGIN_SRC js
-// PUT http://localhost:8080/values/1
-// HTTP/1.1 204 
-// Date: Wed, 12 May 2021 11:10:58 GMT
+// PUT http://localhost:8080/values/5
+// HTTP/1.1 204
+// Date: Mon, 31 May 2021 15:11:50 GMT
 // Keep-Alive: timeout=60
 // Connection: keep-alive
-// Request duration: 0.167273s
+// Request duration: 0.023823s
 #+END_SRC
 
 * Metrics
@@ -194,7 +222,7 @@ demo.controller.updated:1|c|#statistic:count
   * Use =InputStream= and just slowly read (or =OutputStream= and slowly write)
   * Block a thread per request
 
-- We expect very many simultaneous request, but small ones
+- We expect many simultaneous requests, but small ones
   * e.g. distributing events to a great many consumers
   * Use asynchronous servlets (callbacks) or asyncronous Spring MVC (=CompletableFuture=)
   * Request thread is freed (while typically another does the work)
@@ -346,22 +374,38 @@ System.out.println(composed.get());
 - Interoperability through =java.util.concurrent.Flow=
   * Low-level
 *** Akka Streams
-- Mature, large ecosystem
+- Mature, large ecosystem of [[https://doc.akka.io/docs/alpakka/current/index.html][integrations]]
 - Tight integration with other asynchronous concepts (e.g. actors)
 - Tight integration with network I/O (streams of bytes)
 - Well-[[https://doc.akka.io/docs/akka/current/stream/index.html][documented]] [[https://doc.akka.io/api/akka/current/akka/stream/javadsl/Source.html][API]]
 
-- However, many concepts presented here also apply to other libraries
+- Many concepts presented here also apply to other libraries
 *** Akka Streams concepts
+#+BEGIN_SRC plantuml :file streams.png :hidden
+skinparam dpi :dpi
+partition "Graph" {
+:source;
+#aliceblue:(T)
+:flow;
+#aliceblue:(U)
+:sink;
+}
+#+END_SRC
 
-- =Graph= is a *blueprint* for a closed, finite network of *stages*, which communicate by streaming elements
+#+RESULTS:
+[[file:streams.png]]
+
+
+- /Graph/ is a *blueprint* for a closed, finite network of *stages*, which communicate by streaming elements
 - =GraphStage<S extends Shape>.= is one processing stage within a graph
   * taking elements in through zero or more *Inlets*
   * emitting through *Outlets*
 - It's completely up to the stage when and how to respond to arriving elements
-- All built-in graph stages embrace _backpressure_ and _bounded processing_
+- All built-in graph stages embrace /backpressure/ and /bounded processing/
 
 *** Akka graph stage types
+[[file:streams.png]]
+
 - =Source<T, M>.= has one outlet of type =T=
 - =Sink<T, M>.= has one inlet of type =T=
 - =Flow<A, B, M>.= has one inlet of type =A= and one outlet of type =B=
