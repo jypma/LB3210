@@ -233,6 +233,31 @@ Each /row/ has a /key/ that specifies which partition(s) store data for that row
 - Amazon: DynamoDB, Keyspaces
 - Google: BigTable
 - Azure: Cosmos DB (with Cassandra API)
+*** Example cassandra queries
+- Creating a table
+#+BEGIN_SRC sql
+CREATE TABLE chat_messages (
+  roomId int,
+  seqNr int,
+  edited timestamp,
+  userId int,
+  message text,
+
+  PRIMARY KEY (roomId, seqNr)
+);
+#+END_SRC
+  + Table must have a primary key
+  + Part of the primary key is the /partition/ key, which dictates how the data is partitioned (sharded)
+
+- Inserting (or updating) rows
+#+BEGIN_SRC sql
+INSERT INTO chat_messages (roomId, seqNr, edited, userId, message)
+  VALUES (1, 1, NOW(), 42, 'This is my message');
+#+END_SRC
+  + This will insert (or overwrite) the row for the data's primary key values
+  + =UPDATE= also exists, and has the same semantics
+
+- Did somebody say this is NoSQL?
 *** Partitioned queues
 Messages sent to a queue (sometimes called topic) are distributed to partitions, based on a /key/.
 Messages typically small (some services have upper limit of 64kB).
@@ -324,6 +349,28 @@ Full-text search is often important when dealing with data.
   * Many metrics framework support both backends
 [[file:graphics/zipkin.png]]
 ** Deployment
+*** Hosted, semi-hosted or self-hosted?
+- Learning a new data store technology
+  + Reliability guarantees
+  + Scalability and performance characteristics
+  + API
+  + Installation and operation (for developers)
+  + Installation and operation (in production)
+- You can save on the last bullet, but not on the others
+
+- Self-hosted
+  + You install and run everything yourself
+    * Kafka, Cassandra, Elasticsearch
+    * Typically on Docker & Kubernetes
+  + Can re-use knowledge and code between development and production
+- Semi-hosted
+  + Cloud provider installs and operates existing (typically open source) software for you
+  + But you still have to pick server size and count
+  + You're billed per server
+- Hosted
+  + Cloud provider installs and operates everything for you
+  + You're billed per logical storage unit (e.g. database row or queue message)
+
 *** Virtualization and containerization
 - First, there was plain hardware
 - VM abstraction
@@ -462,6 +509,8 @@ docker-compose up -d
   * When creating a domain model, evaluate the scope of your design
   * Create sub-domains when you encounter them
   * Describe the bounds for your domain
+
+- Bounded context is often a good candidate for Microservice boundaries
 *** Ubiquitous language 
 - We have a domain model, great!
 - Added value comes from day-to-day conversations
@@ -486,17 +535,20 @@ docker-compose up -d
 - Why do you think the focus is on /Events/, rather than /Aggregates/?
 - Useful example [[https://www.rubiconred.com/blog/event-storming][here]]
 ** Other patterns
-*** Command query responsibility segregation
-- CQRS: Have two separate data models (and split your API accordingly)
-  * A /command/ model, for API calls that only change data (and do not return data)
-  * A /query/ model, for API calls that only return data (and do not change data)
+*** Idempotency
+- Allow any failed or repeated action to be applied again
+  + With the same result (if previously successful)
+  + Without additional side effects that have business impact
 
-- Builds on CQS (Command query separation). One method can only do one of two things:
-  * Perform a /command/, by having side effects (and not returning a value)
-  * Perform a /query/, returning a value (and not having side effects)
-
-- We'll see CQS again
-*** Event sourcing
+- Example:
+  + New user is stored in our database, but afterwards we failed sending their welcome mail (SMTP server was down).
+    * Retry the database operation: User is already found, so instead we verify that the data matches
+    * Retry sending the mail: We know that we didn't send the mail yet, so we send it once more
+  + New user is stored, welcome mail is sent, but we failed updating our CRM system
+    * Retry the database operation: User is already found, so instead we verify that the data matches
+    * Retry sending the mail: We know that we've already sent this mail, so we simply do nothing
+    * Retry updating the CRM system
+*** Event Sourcing
 - Traditional relational database: CRUD
   * Update in place
 - Change log, shadow table
@@ -507,7 +559,30 @@ docker-compose up -d
   * Read from your event journal again: /full-text search!/
   * Read from your event journal again: /business analytics!/
 
-- Event journal part of API?
+- Event journal can even be a part of your API
+*** Eventual consistency
+- Traditional approach to consistency (/transactions/)
+  + Data store hides concurrent modifications of multiple areas from each other, enforcing constraints
+  + Modifications typically (hopefully) fail if attempting to modify the same data
+  + Even within one data store, hard to get 100% right
+  + Complexity skyrockets when trying to scale beyond one data store (/distributed transactions, XA/)
+
+- Eventual consistency
+  + Embrace the flow of data through the system hitting data stores at different times
+  + Embrace real time as a parameter to affect business logic
+    * /Is it OK if a document I just saved doesn't show in the list until 0.5 seconds later?/
+  + Apply *Idempotency* to all data store updates
+  + Leverage *Event Sourcing* where possible
+*** Command query responsibility segregation
+- CQRS: Have two separate data models (and split your API accordingly)
+  * A /command/ model, for API calls that only change data (and do not return data)
+  * A /query/ model, for API calls that only return data (and do not change data)
+
+- Builds on CQS (Command query separation). One method can only do one of two things:
+  * Perform a /command/, by having side effects (and not returning a value)
+  * Perform a /query/, returning a value (and not having side effects)
+
+- We'll see CQS again
 ** Data formats
 *** XML
 #+BEGIN_SRC xml
