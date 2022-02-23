@@ -23,3 +23,9 @@ Then, you can use the included Maven wrapper to run the application
 ```sh
 ./mvnw spring-boot:run
 ```
+
+# Docker
+
+```sh
+docker exec -ti demo-project_db_1 psql  demo -U demo
+```
