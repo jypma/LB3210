@@ -1,0 +1,344 @@
+#+TITLE: Microservices and partitioned data stores
+#+PROPERTY: header-args:plantuml :exports results :var _dpi_="150"
+#+options: H:3
+#+latex_header: \hypersetup{colorlinks=true,linkcolor=blue}
+#+LATEX_CLASS_OPTIONS: [8pt]
+* Agenda
+
+- Microservices
+  + Definition, philosophy, use cases
+
+- Partitioned data stores
+  + Row stores, queues, search
+
+- Application architecture
+  + Design patterns
+  + Example
+
+* About me
+- Jan Ypma
+  * Independent software architect & developer
+  * Java, Scala, Groovy, C++, Rust, Lisp
+  * Contributor to open source projects (http, reactive streams, audio, embedded)
+  * Fan of functional programming and distributed systems
+  * jan@ypmania.nl, https://linkedin.com/in/jypma
+
+* Microservices
+** What's a microservice
+*** Microservices
+#+ATTR_ORG: :width 1000
+[[file:graphics/microservices.png]]
+
+*** Definition
+- /Service/
+  * One operating system process (often on its own server)
+  * Exposes an API (sometimes also a UI)
+- /Micro/
+  * Theory: It's small
+  * Practice: There are many
+  * Independently deployable
+*** Philosophy
+- Business needs evolve
+- Team composition changes
+- Services should be disposable (design to be replaceable)
+  * Rebuilt in 1-3 months
+- Per service, use best technology matching experience and requirements
+*** Service scope
+- Service belongs to one team
+  * Team is responsible for entire service software life cycle
+- Data store belongs to one service
+- Independently deployable
+*** Use cases
+- Embrace Conway's law: One system belongs to at most one team
+- Monoliths are fine to start with
+  * Time to market and technical debt vs. holistic design
+- Strangler pattern
+** Domain-driven design
+*** Introduction
+- Software methodology
+  * /Names in code must names used by the business/
+- Popularized in 2003 by [[https://www.dddcommunity.org/book/evans_2003/][Eric Evans]] in his book
+- Simple guideline lead to extremely useful patterns
+- Useful example [[https://www.mirkosertic.de/blog/2013/04/domain-driven-design-example/][here]]
+*** Bounded context
+- Reasoning about complex business processes requires abstractions
+  * A /domain model/ implements these abstractions as code
+- Abstractions, and hence models, have a limited applicability
+- /Bounded context/ makes this explicit
+  * When creating a domain model, evaluate the scope of your design
+  * Create sub-domains when you encounter them
+  * Describe the bounds for your domain
+
+- Bounded context is often a good candidate for Microservice boundaries
+*** Ubiquitous language
+- We have a domain model, great!
+- Added value comes from day-to-day conversations
+  * Among developers
+  * Between developers and the customer
+  * Between developers and the user
+- Is everyone speaking the same language?
+
+- /Ubiqutous language/: All team members use important terms in the same way
+  * Within a bounded context
+*** Event storming workshop
+- We need to quickly learn a new domain
+- /Business process modeling/ and /requirements gathering/
+- Bring together /domain experts/ and /developers/
+
+- Discover events that occur in the business, and what triggers them
+  * /Business Event/, e.g. /a customer has applied for a loan/
+  * /Command/, e.g. /create a new loan request/
+  * /Actor/, e.g. /loan requester/
+  * /Aggregate/, e.g. /Loan Application/
+
+- Why do you think the focus is on /Events/, rather than /Aggregates/?
+- Useful example [[https://www.rubiconred.com/blog/event-storming][here]]
+** Upgrading to the cloud
+*** We're migrating to the cloud! What now?
+- Do I need to turn my monolith into microservices first? (no)
+- Do I need to switch from SQL to NoSQL? (no)
+
+Cloud is an /infrastructure/ change first, a /responsibility/ change second, and all further technology changes flow from there.
+* Partitioned data stores
+*** Partitioned data stores: introduction
+- All data is split into partitions (also called /shards/), which are copied onto servers
+- For each data element, a /key/ determines which partition it's stored on
+#+BEGIN_SRC plantuml :file partitioned-data-stores.png :hidden
+skinparam dpi _dpi_
+skinparam linetype ortho
+
+node n1 as "Server 1" {
+  database b1 as "Partition B"
+  database a1 as "Partition A"
+}
+node n2 as "Server 2" {
+  database c2 as "Partition C"
+  database b2 as "Partition B"
+}
+node n3 as "Server 3" {
+  database c3 as "Partition C"
+  database a3 as "Partition A"
+}
+n1 <-right-> n2
+n2 <--> n3
+n1 <--> n3
+
+#+END_SRC
+
+#+RESULTS:
+[[file:partitioned-data-stores.png]]
+
+*** Partitioned row stores
+Each /row/ has a /key/ that specifies which partition(s) store data for that row. Data is typically stored in columns, following a schema.
+
+- Open source: Cassandra
+- Amazon: DynamoDB, Keyspaces
+- Google: BigTable
+- Azure: Cosmos DB (with Cassandra API)
+*** Example cassandra queries
+- Creating a table
+#+BEGIN_SRC sql
+CREATE TABLE chat_messages (
+  roomId int,
+  seqNr int,
+  edited timestamp,
+  userId int,
+  message text,
+
+  PRIMARY KEY (roomId, seqNr)
+);
+#+END_SRC
+  + Table must have a primary key
+  + Part of the primary key is the /partition/ key, which dictates how the data is partitioned (sharded)
+
+- Inserting (or updating) rows
+#+BEGIN_SRC sql
+INSERT INTO chat_messages (roomId, seqNr, edited, userId, message)
+  VALUES (1, 1, NOW(), 42, 'This is my message');
+#+END_SRC
+  + This will insert (or overwrite) the row for the data's primary key values
+  + =UPDATE= also exists, and has the same semantics
+
+- Did somebody say this is NoSQL?
+*** Partitioned queues
+Messages sent to a queue (sometimes called topic) are distributed to partitions, based on a /key/.
+Messages typically small (some services have upper limit of 64kB).
+
+- Open source: Kafka
+- Amazon: SQS
+- Google: Cloud Pub/Sub
+- Azure: Storage Queue ( * ) , Service Bus ( * )
+
+( * ) /not partitioned, size-limited/
+*** Partitioned search
+Full-text search is often important when dealing with data.
+
+- Open source: Elasticsearch, SoLR
+- Amazon: Hosted elasticsearch
+- Google: Hosted elasticsearch
+- Azure: Hosted elasticsearch
+*** Example ElasticSearch index
+Creating an index with a few mappings:
+#+BEGIN_SRC restclient
+PUT http://localhost:9300/my-index-000001
+Content-Type: application/json
+
+{
+  "mappings": {
+    "properties": {
+      "age":    { "type": "integer" },
+      "email":  { "type": "keyword"  },
+      "name":   { "type": "text"  }
+    }
+  }
+}
+#+END_SRC
+
+Add a document to the search index:
+#+BEGIN_SRC restclient
+POST http://localhost:9300/my-index-000001/_doc/
+Content-Type: application/json
+
+{
+  "age": 367,
+  "email": "user@test.com",
+  "name": "Santa Claus"
+}
+#+END_SRC
+
+Search for content:
+#+BEGIN_SRC restclient
+GET http://localhost:9300/my-index-000001/_search?q=Santa
+#+END_SRC
+
+*** Hosted, semi-hosted or self-hosted?
+- Learning a new data store technology
+  + Reliability guarantees
+  + Scalability and performance characteristics
+  + API
+  + Installation and operation (for developers)
+  + Installation and operation (in production)
+- You can save on the last bullet, but not on the others
+
+- Self-hosted
+  + You install and run everything yourself
+    * Kafka, Cassandra, Elasticsearch
+    * Typically on Docker & Kubernetes
+  + Can re-use knowledge and code between development and production
+- Semi-hosted
+  + Cloud provider installs and operates existing (typically open source) software for you
+  + But you still have to pick server size and count
+  + You're billed per server
+- Hosted
+  + Cloud provider installs and operates everything for you
+  + You're billed per logical storage unit (e.g. database row or queue message)
+  + Vendor-locked technologies (e.g. Amazon SQS, Google BigTable)
+    * Typically can't be ran locally for developers
+    * Non-negligible impact on development speed and cost
+
+* Application architecture
+** Patterns for distributed systems
+*** Idempotency
+- Allow any failed or repeated action to be applied again
+  + With the same result (if previously successful)
+  + Without additional side effects that have business impact
+
+- Example:
+  + New user is stored in our database, but afterwards we failed sending their welcome mail (SMTP server was down).
+    * Retry the database operation: User is already found, so instead we verify that the data matches
+    * Retry sending the mail: We know that we didn't send the mail yet, so we send it once more
+  + New user is stored, welcome mail is sent, but we failed updating our CRM system
+    * Retry the database operation: User is already found, so instead we verify that the data matches
+    * Retry sending the mail: We know that we've already sent this mail, so we simply do nothing
+    * Retry updating the CRM system
+*** Event Sourcing
+- Traditional relational database: CRUD
+  * Update in place
+- Change log, shadow table
+
+- Turn it upside down: /Event journal/ is the source of truth
+  * Read from the event journal to create your query model
+  * No more CRUD
+  * Read from your event journal again: /full-text search!/
+  * Read from your event journal again: /business analytics!/
+
+- Event journal can even be a part of your API
+*** Eventual consistency
+- Traditional approach to consistency (/transactions/)
+  + Data store hides concurrent modifications of multiple areas from each other, enforcing constraints
+  + Modifications typically (hopefully) fail if attempting to modify the same data
+  + Even within one data store, hard to get 100% right
+  + Complexity skyrockets when trying to scale beyond one data store (/distributed transactions, XA/)
+
+- Eventual consistency
+  + Embrace the flow of data through the system hitting data stores at different times
+  + Embrace real time as a parameter to affect business logic
+    * /Is it OK if a document I just saved doesn't show in the list until 0.5 seconds later?/
+  + Apply *Idempotency* to all data store updates
+  + Leverage *Event Sourcing* where possible
+** Example architecture: real-time chat
+#+BEGIN_SRC plantuml :file chat.png :hidden
+skinparam dpi :dpi
+skinparam linetype ortho
+' partition "name" for sequence diagrams
+package "chat" {
+
+interface r1 as "REST (commands)"
+interface r2 as "REST (query)"
+
+node "Docker" {
+  [cmd] as "Command module"
+  r1 -- [cmd]
+
+  [qry] as "Query module"
+  r2 -- [qry]
+
+  [idx] as "Indexer module"
+}
+
+cloud "Hosted" {
+queue k as "Kafka (event stream)"
+
+database e as "Elasticsearch (index)"
+
+database c as "Cassandra (journal)"
+}
+
+cmd --> c
+c --> k
+k --> [idx]
+[idx] --> e
+qry --> e
+}
+#+END_SRC
+
+#+RESULTS:
+[[file:chat.png]]
+
++ *Journal* contains events related to chat, e.g.
+  * Room created
+  * User joined a room
+  * User posted a message
+  * User edited a message
++ *Index* contains the current state of a room, e.g.
+  * Its current messages
++ *Command service* performs validation checks and then emits events
+#+BEGIN_SRC restclient
+PUT /rooms/all_about_mysql
+POST /rooms/all_about_mysql/messages
+#+END_SRC
++ *Query service* provides a thin query API on top of the *Index*
+#+BEGIN_SRC restclient
+GET /rooms/all_about_mysql/messages?since=1_hour
+GET /rooms/all_about_mysql/messages
+Connection: Upgrade
+Upgrade: websocket
+#+END_SRC
++ *Indexer service* reads evens from the journal (through Kafka), and updates the *Index*
+
+* Thank you!
+
+- Any questions?
+
+- Feedback?
+  + Jan Ypma, =jan@ypmania.net=
