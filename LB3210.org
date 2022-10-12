@@ -91,6 +91,24 @@ Freely available here:
 - Monoliths are fine to start with
   * Time to market and technical debt vs. holistic design
 - Strangler pattern
+** The 8 fallacies of distributed computing
+*** Which of these is true?
+
+1. The network is reliable.
+2. Latency is zero.
+3. Bandwidth is infinite.
+4. The network is secure.
+5. Topology doesn't change.
+6. There is one administrator.
+7. Transport cost is zero.
+8. The network is homogeneous.
+
+*** How well does the following abstraction help?
+
+#+BEGIN_SRC java
+MyResponseType callMyRemoteService(String command, byte[] data)
+#+END_SRC
+
 * Design for resilience
 ** Service failure
 *** Your (or your colleague's) service will be down
@@ -106,7 +124,7 @@ That means that 63% of the time, at least one service is down somewhere.
 - Idempotency for all incoming data
 - Always deploy more than 1 copy 
   * Investigate the need for a cluster-aware distributed framework
-- Have a /Service dashboard/ with metrics
+- Have a /Service dashboard/ with metrics (more on that later)
 - Use =Bulkhead= to protect finite resources
 *** Bulkhead
 A single resource pool is covering multiple types of application requests
@@ -117,6 +135,23 @@ A single resource pool is covering multiple types of application requests
 - Other parts of the resource pool are still accessible
 
 [[file:graphics/svg/with_bulkhead.png]]
+*** Measure service quality
+- Service Level Objective (SLO)
+  + Metric that indicates a healthy service to you, e.g.
+    * /"The 99th percentile of HTTP response times is at most 300ms"/
+    * /"At least 99.9% of HTTP requests result in a successful response"/
+  + Typically only internally measured and/or agreed between teams
+
+- Service Level Indicator (SLI)
+  + An actual number that indicates the current value of an /SLO/, e.g.
+    * 99th percentile response time
+    * 24-hour window success rate of HTTP requests
+
+- Service Level Agreement (SLA)
+  + Part of a contractual obligation (sometimes legally binding) between parties
+    * /"The 95th percentile of HTTP response times is at most 1000ms"/
+    * /"At least 99% of HTTP requests result in a successful response"/
+  + Typically results in a stricter SLO being applied internally
 ** Consuming services
 *** Guidelines
 - Design for failure
@@ -370,7 +405,16 @@ Full-text search is often important when dealing with data.
 - Hosted
   + Cloud provider installs and operates everything for you
   + You're billed per logical storage unit (e.g. database row or queue message)
+*** Pets vs. cattle
+- /Pets/: Traditional server management
+  + Servers have cute names
+  + Some server names I've seen: =pinkie=, =oink=, =tardis=, =deepthought=, =zeus=
+  + Everyone know the peculiarities of each server
 
+- /Cattle/: Cloud server management
+  + Servers have only a logical ID or number
+  + Hardware setup, rack and/or location
+  + Find an available server to put your service on
 *** Virtualization and containerization
 - First, there was plain hardware
 - VM abstraction
@@ -1211,8 +1255,8 @@ Who can tell us something about:
 - Let's look at an [[file:demo-project/documentation/demo-api.html][example API]] example API together
   * Its [[file:demo-project/documentation/demo-api.raml][RAML source]] is available
 - Semantic format for describing REST APIs: RAML, OpenAPI
-  * RAML: YAML-based, more advanced, easier to write by hand
-  * OpenAPI: JSON-based, more tooling support
+  * RAML: YAML-based, better re-use, easier to write by hand
+  * OpenAPI: JSON/YAML-based, more popular
 *** Content-type negotiation
 - Embrace content-type negotiation (XML /and/ JSON, not XML /or/ JSON)
 - XML API:
@@ -1246,12 +1290,120 @@ Who can tell us something about:
 - Your dashboard should be showing
   * System metrics (load average, disk space, CPU usage, memory usage, network I/O, disk I/O)
   * Your process' metrics (CPU usage, memory usage)
-  * Your JVM's metrics (Heap committed, heap used, GC time, thread count, log4j count)
+  * Your VM's metrics (Heap committed, heap used, GC time, thread count, log count)
   * Your framework's metrics (HTTP server open connections, HTTP client open connections, response times, response errors)
   * Your business metrics (number of pets signed up, total invoice amount, size of received chat messages)
 
 - For each environment, after a few days examine the graphs
   * Establish a baseline, and create an alert for /each/ metric
+* An introduction to REST
+** REST philosophy
+- *World-wide web* (1990): HTTP over internet, with hypermedia (HTTP)
+  + Unprecedented scaling
+  + Applications (e.g. Facebook, Amazon) can develop continuously without clients (browsers) breaking
+    * /(at least, until they figured out native clients means no ad-blockers...)/
+  + Managed to survive 20+ years in a wild changing landscape, with limited technical debt
+    * Most of HTTP and HTML are still relevant
+- Apparently, it's possible to perform heterogeneous systems integration without any
+  + legal contracts,
+  + deep specifications, or
+  + personal knowledge
+
+- Try pulling that off in your enterprise!
+** REST principles
+- Apply the WWW success for system-to-system communication
+  + =RE= presentational =S= tate =T= ransfer
+- Request-based from /client/ to /server/
+  + Distinctly separated roles that two systems or actors play when handling a request
+- Stateless
+  + Request contains all information needed to process it (instead of, e.g. the TCP connection socket)
+- Caching
+  + Responses must clearly state, and have sensible defaults, on how content can be cached
+- Uniform interface
+  + All components are accessed the same way
+- Layered system
+  + Intermediaries can be transparently inserted between client and server (load balancers, proxies, security gateways, ...)
+** Resources
+In REST, the /client/ accesses a /resource/ on the /server/, through a /request/.
+
+A resource:
+- Is a noun, e.g. /user/, /invoice/, /setting/, but also /transaction/, /order status/, or /deletion process/
+- Can have several representations, e.g. XML, JSON, HTML, picture, small, large
+- Is accessed through one or several URLs
+  + =/users/15=, =/users/latest=, =/users?name=Santa= might all return the same resource
+- Is interacted with through a limited set of verbs (more on that later)
+** An introduction to HTTP
+- Text-based protocol over TCP
+  + Client sends a request (with /verb/, /headers/, and optional /body/)
+  + Server sends a response (with /status line/, /headers/, and optional /body/)
+  + (since HTTP 1.1) Client sends a new request, etc.
+
+Client sends:
+#+BEGIN_SRC restclient
+GET /cats/latest?fur=white&size=small
+Accept: image/png
+User-Agent: Mozilla/5.0
+
+#+END_SRC
+
+Response then comes in:
+#+BEGIN_SRC restclient
+200 OK
+Content-Type: image/png
+Content-Length: 53748
+
+[...kitten goes here...]
+#+END_SRC
+*** HTTP Verbs
+- Predefined verbs imply important caching and retry semantics
+|--------+----------------+-------------+---------------+----------------+-----------------|
+| Verb   | Safe to retry? | Idempotent? | Request body? | Response body? | Cache response? |
+|--------+----------------+-------------+---------------+----------------+-----------------|
+| GET    | yes            | yes         | -             | yes            | yes             |
+| HEAD   | yes            | yes         | -             | -              | yes             |
+| PUT    | -              | yes         | yes           | -              | -               |
+| POST   | -              | -           | sometimes     | sometimes      | -               |
+| DELETE | -              | yes         | -             | -              | -               |
+|--------+----------------+-------------+---------------+----------------+-----------------|
+
+- Why wouldn't =PUT= or =DELETE= be safe to retry?
+
+- Rest is not RPC
+*** Example HTTP status codes
+The /status line/ contains a code and then a short description. The description is not predescribed, and sometimes contains useful information.
+- =200 OK=
+  + The request succeeded. Typically a response body is present.
+- =201 Created=
+  + The request succeeded, and a new resource was created as a result.
+- =204 No Content=
+  + The request succeeded, but no content is available.
+- =302 Found=
+  + The resource was found at a different URL, which is returned in the =Location= header.
+- =404 Not Found=
+  + The resource does not exist. This does /not/ necessarily mean that an API endpoint does not exist.
+
+This is not a full list. See the HTTP [[https://en.wikipedia.org/wiki/List_of_HTTP_status_codes][official status codes]] or a more [[https://http.cat/401][graphically-accessible variant]].
+
+*** Example HTTP Headers
+- =Accept: image/*=
+  + Sent in a /request/ to indicate the MIME types that the client prefers for this request (but there's no guarantee)
+- =Content-type: image/png=
+  + Sent in a /request/ or /response/ to indicate the actual MIME type of the body
+- =Content-length: 5124=
+  + Sent in a /request/ or /response/ to indicate the size of the body in bytes (if known)
+- =Last-Modified: Wed, 21 Oct 2015 07:28:00 GMT=
+  + Sent in a /response/ to indicate when that resource was last changed
+
+This is not a full list.
+** REST API design
+- Find resources for your domain
+  + Perhaps using an /Event Storming/ workshop (from /Domain-Driven Design/)
+- Use CQRS (Command Query Response Segregation)
+  + Find representations for those resources (current state and/or events): =GET=
+  + Find commands affecting those resources (creation, modification, transactions): =POST=, =PUT=, =PATCH=, =DELETE=
+- Size limits on everything (do we need to stream or read it in memory?)
+- XML, JSON, CSV, text, protobuf (more content-type negotiation later)
+- Decide on a /Service Level Objective/ for your API (yes, already now)
 * A selection of REST patterns
 ** Resource tags and caching
 *** Resources have versions
@@ -1454,6 +1606,74 @@ GET http://localhost/service/versions/1/myresource
 - This does kinda work
 
 - Fairly weak way to work around /actually/ dealing with semantic changes and compatibility
+* REST API Examples
+** Examples of REST design
+*** Github
+#+BEGIN_SRC restclient
+GET https://api.github.com/search/issues?q=windows+label:bug+language:python+state:open&sort=created&order=asc
+Accept: application/vnd.github.text-match+json
+
+200 OK
+Content-Type: application/vnd.github.text-match+json
+{
+  "text_matches": [
+    {
+      "object_url": "https://api.github.com/repositories/215335/issues/132",
+      "object_type": "Issue",
+      "property": "body",
+      "fragment": "comprehensive windows [...] ter.\n",
+      "matches": [ ... ]
+    }, [...]
+  ]
+}
+#+END_SRC
+
+*** Github
+Notes:
+
+- Using a custom content-type to indicate a special flavor of JSON
+- Relying on =GET= to indicate a read request
+*** AWS: Create EC2 instance
+#+BEGIN_SRC restclient
+GET https://https://ec2.amazonaws.com/?Action=RunInstances&ImageId=ami-2bb65342&MaxCount=3&MinCount=1&Placement.AvailabilityZone=us-east-1a&Monitoring.Enabled=true&Version=2016-11-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIDEXAMPLE%2F20130813%2Fus-east-1%2Fec2%2Faws4_request&X-Amz-Date=20130813T150206Z&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-date&X-Amz-Signature=525d1a96c69b5549dd78dbbec8efe264102288b83ba87b7d58d4b76b71f59fd2
+
+200 OK
+[... EC2 server is started...]
+#+END_SRC
+
+*** AWS: Create EC2 instance
+Notes:
+
+- a =GET= verb is used to have side effects!
+- No resource representation of the actual server to be created
+- Proprietary authentication mechanism, and using the URL for this
+
+*** Flicker's image search
+#+BEGIN_SRC restclient
+GET http://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=xxx&text=trysil&format=rest&auth_token=xxx&api_sig=xxx
+Accept: text/xml
+
+200 OK
+Content-Type: text/xml
+
+<?xml version="1.0" encoding="utf-8" ?>
+<rsp stat="ok">
+    <photos page="1" pages="121" perpage="100" total="12050">
+        <photo id="12185296515" owner="110367434@N02" secret="7bf83bc507" server="3714" farm="4" title="#wall #clock #wood #old #Norway #Trysil #travel #travelling" ispublic="1" isfriend="0" isfamily="0" />
+        <photo id="12185880206" owner="110367434@N02" secret="c8042c1764" server="7382" farm="8" title="Good morning!   #Norway #Trysil #window #snow #beautiful #landscape #travel #travelling #polar #expedition" ispublic="1" isfriend="0" isfamily="0" />
+        ...
+        <photo id="11793639173" owner="40644602@N08" secret="ba2bdabf5c" server="7451" farm="8" title="by beateorten http://ift.tt/1dHDdQL" ispublic="1" isfriend="0" isfamily="0" />
+    </photos>
+</rsp>
+#+END_SRC
+*** Flicker's image search
+Notes:
+
+- Overloading of methods in the request URL
+- Overloading of content type in the request URL
+- Overloading of HTTP status code in the response
+- No obvious way to explore the API further (how do I load a photo?)
+
 * Break(out) 4
 ** Designing an API
 *** Write a RAML file for an invoicing API
@@ -1624,9 +1844,6 @@ https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
 - Pure function example (split up business logic and side effects)
 - Screen sharing of others??
 
-- Practice inkscape freehand drawing and shortcuts
-- Light theme
-- Example DDD class diagram
 - Draw the UML diagram from https://developer.okta.com/blog/2019/08/22/okta-authjs-pkce
 - Add HTTP cats https://http.cat/401
 - Add comics
