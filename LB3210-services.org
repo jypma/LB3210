@@ -1,0 +1,65 @@
+#+TITLE: Microservices with Java and Spring Boot
+#+PROPERTY: header-args:plantuml :exports results :var _dpi_="150" 
+#+options: H:3
+#+latex_header: \hypersetup{colorlinks=true,linkcolor=blue}
+#+LATEX_CLASS_OPTIONS: [8pt]
+* Introduction
+* Design for resilience
+* Break(out) 1
+** Service discovery
+*** Introduction
+- Break into teams of 2-4 people (20 min)
+http://github.com/jypma/LB3210
+- Discuss the services and projects you've been a part of, and identify:
+  * Examples of a microservice
+  * Examples of /definitely NOT/ a microservice
+
+- For each service found, describe how /resilient/ the given service was
+  * Usage or absence of /bulkhead/ and/or /circuit breaker/
+  * Usage or absence of clustering / replication
+
+*** Discussion
+- Describe the services you have found
+* Infrastructure architecture
+* TODO Break(out) 2
+* Data architecture
+* TODO Break(out) 3
+* Wrapping up today
+* Start of day 2
+* Getting your service used
+* An introduction to REST
+* Breakout 4: Finding REST services
+** Assignment
+- Divide into teams
+- Find documentation of REST services
+  + Internally published in your company
+  + Publically on the internet
+- Create a full example request for each service
+  + Request headers and (if relevant) body
+  + Response status line, headers, and (if relevant) body
+  + Bonus points if you can actually execute the request!
+** Presentation of results
+* A selection of REST patterns
+* REST API Examples
+* Break(out) 5
+** Designing an API
+*** Write a RAML file for an invoicing API
+- We're writing an invoicing service, that can send and receive invoices between companies
+
+- We need APIs to:
+  * Send an invoice
+  * Read back previously-sent invoices
+  * Check if we have received any invoices, and
+  * Read received invoices
+
+- You don't have to design an invoice format
+  * You can assume they're plain text or PDF, if you want
+
+- View [[file:demo-project/documentation/demo-api.raml]] if you need an example RAML file
+- Hints:
+  * RAML documentation and on-line editor: https://raml.org/
+  * RAML 1.0 spec: https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md/
+* Micro service life cycle
+* Security architecture
+* Strategy and team dynamics
+* TODO Break(out) 5
