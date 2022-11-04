@@ -577,7 +577,6 @@ docker-compose up -d
   * /Aggregate/, e.g. /Loan Application/
 
 - Why do you think the focus is on /Events/, rather than /Aggregates/?
-- Useful example [[https://www.rubiconred.com/blog/event-storming][here]]
 ** Other patterns
 *** Idempotency
 - Allow any failed or repeated action to be applied again
@@ -1332,6 +1331,8 @@ A resource:
 - Is accessed through one or several URLs
   + =/users/15=, =/users/latest=, =/users?name=Santa= might all return the same resource
 - Is interacted with through a limited set of verbs (more on that later)
+
+Remember your event storming workshop?
 ** An introduction to HTTP
 - Text-based protocol over TCP
   + Client sends a request (with /verb/, /headers/, and optional /body/)
@@ -1635,7 +1636,7 @@ Notes:
 - Relying on =GET= to indicate a read request
 *** AWS: Create EC2 instance
 #+BEGIN_SRC restclient
-GET https://https://ec2.amazonaws.com/?Action=RunInstances&ImageId=ami-2bb65342&MaxCount=3&MinCount=1&Placement.AvailabilityZone=us-east-1a&Monitoring.Enabled=true&Version=2016-11-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIDEXAMPLE%2F20130813%2Fus-east-1%2Fec2%2Faws4_request&X-Amz-Date=20130813T150206Z&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-date&X-Amz-Signature=525d1a96c69b5549dd78dbbec8efe264102288b83ba87b7d58d4b76b71f59fd2
+GET https://ec2.amazonaws.com/?Action=RunInstances&ImageId=ami-2bb65342&MaxCount=3&MinCount=1&Placement.AvailabilityZone=us-east-1a&Monitoring.Enabled=true&Version=2016-11-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIDEXAMPLE%2F20130813%2Fus-east-1%2Fec2%2Faws4_request&X-Amz-Date=20130813T150206Z&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-date&X-Amz-Signature=525d1a96c69b5549dd78dbbec8efe264102288b83ba87b7d58d4b76b71f59fd2
 
 200 OK
 [... EC2 server is started...]
