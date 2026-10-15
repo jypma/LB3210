@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.4.4</version>
+    <version>4.1.1</version>
     <relativePath/>
   </parent>
 
@@ -17,10 +17,11 @@
   <description>Demo project for Spring Boot</description>
 
   <properties>
+    <maven.compiler.release>21</maven.compiler.release>
     <java.version>11</java.version>
     <flyway.version>7.8.2</flyway.version>
     <postgres.driver.version>42.2.20</postgres.driver.version>
-    <jooq.version>3.14.9</jooq.version>
+    <jooq.version>3.21.9</jooq.version>
     <database.url>jdbc:postgresql://localhost:5432/demo</database.url>
     <database.user>demo</database.user>
     <database.password>example</database.password>
@@ -47,6 +48,10 @@
     <dependency>
       <groupId>org.springframework.amqp</groupId>
       <artifactId>spring-rabbit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-amqp</artifactId>
     </dependency>
 
     <dependency>
@@ -138,6 +143,20 @@
       </plugin>
 
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+          <showWarnings>true</showWarnings>
+          <compilerArgs>
+            <arg>-Xlint:all,rawtypes,-processing,-options,-serial,-dangling-doc-comments</arg>
+            <arg>-Werror</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+
+      <plugin>
         <groupId>org.jooq</groupId>
         <artifactId>jooq-codegen-maven</artifactId>
         <version>${jooq.version}</version>
@@ -165,7 +184,7 @@
             </database>
             <generate>
               <pojos>true</pojos>
-              <immutablePojos>true</immutablePojos>
+              <pojosAsJavaRecordClasses>true</pojosAsJavaRecordClasses>
             </generate>
             <target>
               <packageName>com.example.demoproject.db</packageName>

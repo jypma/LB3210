@@ -81,12 +81,12 @@ public class DemoController {
 
     @PostMapping("/values")
     public ResponseEntity<?> create(@RequestBody FlywayTest body) {
-        incomingSize.record(body.getValue().length());
+        incomingSize.record(body.value().length());
 
         var created = inRepoTransaction(r -> r.create(body));
         sendToQueue("Created: " + body);
         var uri = ServletUriComponentsBuilder.fromCurrentRequest()
-            .pathSegment(created.getId().toString())
+            .pathSegment(created.id().toString())
             .build()
             .toUri();
 
@@ -98,12 +98,12 @@ public class DemoController {
 
     @PutMapping("/values/{id}")
     public ResponseEntity<?> update(@PathVariable("id") int id, @RequestBody FlywayTest body) {
-        incomingSize.record(body.getValue().length());
+        incomingSize.record(body.value().length());
         updated.increment();
 
         // Unfortunately, we have to verbosely copy here, since JOOQ hasn't implemented "with" methods
         // See https://github.com/jOOQ/jOOQ/issues/5257 for details.
-        var obj = new FlywayTest(body.getKey(), body.getValue(), id);
+        var obj = new FlywayTest(body.key(), body.value(), id);
         inRepoTransactionDo(r -> r.update(obj));
         sendToQueue("Updated: " + body);
         return ResponseEntity.noContent().build();
