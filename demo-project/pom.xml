@@ -175,8 +175,31 @@
         </configuration>
       </plugin>
 
+      <!-- Register the jOOQ generated sources as a compile source root.
+           Needed so IDEs (m2e/jdtls, Eclipse) add target/generated-sources/jooq
+           to the build path; jooq-codegen-maven only adds it at build time. -->
       <plugin>
-	<groupId>org.springframework.boot</groupId>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>add-jooq-generated-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>target/generated-sources/jooq</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+        <plugin>
+   	<groupId>org.springframework.boot</groupId>
 	<artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
     </plugins>
