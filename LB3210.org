@@ -12,55 +12,49 @@
 
 [[file:graphics/lb-logo_stort_1363x359.jpg]]
 
-Freely available here:
+Slides available here:
 [[https://github.com/jypma/LB3210][https://github.com/jypma/LB3210]]
 
 - PDF of slides will be available at completion
 - Pull requests with fixes to our typos are welcome :-)
 
-*** About your instructors
+*** About your instructor
 - Jan Ypma
-  * Almost 20 years of Java experience (yay, generics!)
-  * Groovy, Scala, C++, Rust, Lisp
-  * Contributor to =akka=, =akka-http= and others
-  * Fan of functional programming and distributed systems
-  * jan@ypmania.nl, https://linkedin.com/in/jypma
-
-- Jakob Bendsen
- * 20+ years of IT and Java experience
- * Teaching at ITU and numerous courses in Danish IT industry
- * Experience with Java/Jakarta EE and Spring (Boot)
- * Likes Kotlin and elegant programs
- * jakob@logb.dk, https://linkedin.com/in/jbendsen
+  * Almost 24 years of Java experience (yay, generics!)
+  * Scala, Groovy, C++, Rust, Lisp
+  * Contributor to =akka= (Apache Pekko), =akka-http= and others
+  * Functional programming and distributed systems
+  * Agile coach and fan of Domain-Driven Design
+  * =jan@ypmania.net=, https://linkedin.com/in/jypma
 
 
 *** Schedule, day 1
-|  Time | Duration | Activity                                            | Weight |
-|-------+----------+-----------------------------------------------------+--------|
-| 13:00 |    00:10 | Welcome, Outline/Agenda                             |      2 |
-| 13:10 |    00:20 | Round table introductions                           |        |
-| 13:30 |    00:10 | What's a microservice                               |      4 |
-| 13:40 |    00:20 | Design for resilience                               |     12 |
-|-------+----------+-----------------------------------------------------+--------|
-| 14:00 |    00:20 | Break(out) 1                                        |        |
-|-------+----------+-----------------------------------------------------+--------|
-| 14:20 |    00:15 | Discussion of breakout results                      |        |
-| 14:35 |    00:45 | Infrastructure architecture                         |     27 |
-|-------+----------+-----------------------------------------------------+--------|
-| 15:20 |    00:20 | Break(out) 2                                        |        |
-|-------+----------+-----------------------------------------------------+--------|
-| 15:40 |    00:30 | Data architecture                                   |     13 |
-|-------+----------+-----------------------------------------------------+--------|
-| 16:10 |    00:10 | Break                                               |        |
-|-------+----------+-----------------------------------------------------+--------|
-| 16:20 |    00:45 | Software architecture                               |     28 |
-| 17:05 |    00:10 | Demo project API demo and code overview             |      5 |
-|-------+----------+-----------------------------------------------------+--------|
-| 17:15 |    00:55 | Break(out) 3                                        |        |
-|-------+----------+-----------------------------------------------------+--------|
-| 18:10 |    00:30 | Presentation(s) of extended demo project            |        |
-| 18:40 |    00:20 | Homework, Wrap-up, reserved time for extra subjects |        |
-|-------+----------+-----------------------------------------------------+--------|
+|  Time | Duration | Activity                                  | Weight |
+|-------+----------+-------------------------------------------+--------|
+| 09:00 |    00:10 | Welcome, Outline/Agenda                   |      2 |
+| 09:10 |    00:20 | Round table introductions                 |        |
+| 09:30 |    00:10 | What's a microservice                     |      4 |
+| 09:40 |    00:20 | Design for resilience                     |     12 |
+|-------+----------+-------------------------------------------+--------|
+| 10:00 |    00:20 | Break(out) 1                              |        |
+|-------+----------+-------------------------------------------+--------|
+| 10:20 |    00:15 | Discussion of breakout results            |        |
+| 10:35 |    00:45 | Infrastructure architecture               |     27 |
+|-------+----------+-------------------------------------------+--------|
+| 11:20 |    00:20 | Break(out) 2                              |        |
+|-------+----------+-------------------------------------------+--------|
+| 11:40 |    00:30 | Data architecture                         |     13 |
+|-------+----------+-------------------------------------------+--------|
+| 12:10 |    00:10 | Break                                     |        |
+|-------+----------+-------------------------------------------+--------|
+| 12:20 |    00:45 | Software architecture                     |     28 |
+| 13:05 |    00:10 | Demo project API demo and code overview   |      5 |
+|-------+----------+-------------------------------------------+--------|
+| 13:15 |    00:55 | Break(out) 3                              |        |
+|-------+----------+-------------------------------------------+--------|
+| 14:10 |    00:30 | Presentation(s) of extended demo project  |        |
+| 14:40 |    00:40 | Wrap-up, reserved time for extra subjects |        |
+|-------+----------+-------------------------------------------+--------|
 #+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
 *** Talk about yourself
 - My Background
@@ -103,6 +97,7 @@ Freely available here:
 7. Transport cost is zero.
 8. The network is homogeneous.
 
+[[https://web.archive.org/web/20171107014323/http://blog.fogcreek.com/eight-fallacies-of-distributed-computing-tech-talk/][source]]
 *** How well does the following abstraction help?
 
 #+BEGIN_SRC java
@@ -119,13 +114,6 @@ P(everything working) = P(one service is working) ^ n_services
 Well, we have about 30 microservices, each with 3 copies. 
 That means that 63% of the time, at least one service is down somewhere.
 ** Creating services
-*** Guidelines
-- Prefer sharded (partitioned) data stores over single points of failure
-- Idempotency for all incoming data
-- Always deploy more than 1 copy 
-  * Investigate the need for a cluster-aware distributed framework
-- Have a /Service dashboard/ with metrics (more on that later)
-- Use =Bulkhead= to protect finite resources
 *** Bulkhead
 A single resource pool is covering multiple types of application requests
 
@@ -136,22 +124,34 @@ A single resource pool is covering multiple types of application requests
 
 [[file:graphics/svg/with_bulkhead.png]]
 *** Measure service quality
+- Service Level Indicator (SLI)
+  + An actual number that indicates the current value of an /SLO/, e.g.
+    * 99th percentile response time
+    * 24-hour window success rate of HTTP requests
+
 - Service Level Objective (SLO)
   + Metric that indicates a healthy service to you, e.g.
     * /"The 99th percentile of HTTP response times is at most 300ms"/
     * /"At least 99.9% of HTTP requests result in a successful response"/
   + Typically only internally measured and/or agreed between teams
 
-- Service Level Indicator (SLI)
-  + An actual number that indicates the current value of an /SLO/, e.g.
-    * 99th percentile response time
-    * 24-hour window success rate of HTTP requests
-
 - Service Level Agreement (SLA)
   + Part of a contractual obligation (sometimes legally binding) between parties
     * /"The 95th percentile of HTTP response times is at most 1000ms"/
     * /"At least 99% of HTTP requests result in a successful response"/
   + Typically results in a stricter SLO being applied internally
+*** Recommendations
+When creating microservices:
+
+- Prefer sharded (partitioned) data stores over single points of failure
+- Embrace eventual consistency
+  * Idempotency for all incoming data
+- Always deploy more than 1 copy
+  * Investigate the need for a cluster-aware distributed framework
+- Have a /Service dashboard/ with metrics
+- Use =Bulkhead= to protect finite resources
+
+More on all of these later.
 ** Consuming services
 *** Guidelines
 - Design for failure
@@ -190,20 +190,26 @@ Half_Open -> Open : [failure rate above threshold]
 - Service co-dependencies
   * Keep HTTP calls one way only
   * Plugin pattern
+
 - Nested synchronous service calls
+  * API gateway calls backend, which calls calculation service, which calls user service, which calls authorization service
   * Added latency and failure possibility
   * Avoid these with event sourcing
-  * Replicate data instead, or call asynchronously when possible
+  * Alternatives:
+    + Change service boundaries
+    + Replicate data instead
+    + Call asynchronously
 *** Need more inspiration?
 - The twelve-factor app, [[https://12factor.net/][https://12factor.net/]]
-- Provides sensible suggestions on a lot of topics
-  * Port binding, dev/prod differences, admin processes
-- Not the only way (geared towards ruby/python), but worth a thorough read
+  * Provides sensible suggestions on a lot of topics
+    + Port binding, dev/prod differences, admin processes
+  * Not the only way (geared towards ruby/python), but worth a thorough read
+
+- Self-contained systems: https://scs-architecture.org/
 * Break(out) 1
 ** Service discovery
 *** Introduction
 - Break into teams of 2-4 people (20 min)
-http://github.com/jypma/LB3210
 - Discuss the services and projects you've been a part of, and identify:
   * Examples of a microservice
   * Examples of /definitely NOT/ a microservice
@@ -215,6 +221,7 @@ http://github.com/jypma/LB3210
 - Oh, and check your laptop, make sure you have the following:
   * =git=
   * =docker-compose=
+  * =maven=
   * =java= (8+, preferably 11+)
 
 *** Discussion
@@ -226,7 +233,7 @@ http://github.com/jypma/LB3210
 *** Get familiar with linux
 - Micro services are a linux world
 - It's easier than ever to get started
-  * WSL 2 (some integration, less "linux", and has [[https://www.polv.cc/post/2020/11/wsl-vs-virtualbox][issues]])
+  * WSL 2 (some integration, traditionally has had [[https://www.polv.cc/post/2020/11/wsl-vs-virtualbox][issues]], probably better today)
   * VirtualBox with e.g. Ubuntu (real linux)
   * Dual boot e.g. Ubuntu
   * Just get a Raspberry Pi
@@ -315,23 +322,23 @@ Full-text search is often important when dealing with data.
 - Many moving parts needed to make primary/replica failover work
   * PostgreSQL: Multiple servers possible, but failures leak to the client. =pgBouncer= as alternative.
   * MariaDB: Multiple servers possible with failover, fail-back is a manual process
-  * RabbitMQ: Multiple servers possible with failover, but fail-back doesn't work in Spring ([[https://jira.spring.io/browse/AMQP-318][AMQP-318]]) 
-- If you choose these, make failover testing part of your CI
+  * RabbitMQ: Multiple servers possible with failover
+- If you choose these, make failover and failback testing part of your CI
 *** RabbitMQ
 - Message queue with focus on performance
 - Original architecture single-server
   * Later extended with /Mirror Queues/ (primary/replica)
-  * Extended with /Quorum Queues/ in 2019 (raft)
-    + No message TTL, no message priorities
+  * Extended with /Quorum Queues/ in 2019 (based on raft), regularly expanded since:
+    + Limited message TTL
     + All cluster members have all data
-    + All messages in memory! (in addition to storage)
+    + Complete message index in memory
 *** RabbitMQ Data consistency
 - AMQP "transaction"
   * Covers only a single queue
   * "Slow" (fsync for every transaction)
 - /Publisher confirms/
   * Asynchronous message from RabbitMQ to client (after fsync): =basic.ack= or =basic.nack=
-  * Impossible to predictably deal with lost broker connection (risk duplicate, risk lost messages)
+  * Lost broker connection: risk duplicate, or risk lost messages
 - Manual /Consumer acknowledgement/
   * Consumer sends message to RabbitMQ to confirm handling of message is complete
   * =basic.ack=, =basic.nack(requeue)=, =basic.nack(no requeue)=
@@ -367,6 +374,9 @@ Full-text search is often important when dealing with data.
     + e.g. the response time to a request
   * /Distribution summary/ (sometimes called /histogram/ or even /gauge/): Recorded values (and units) that go with events
     + e.g. the size of incoming requests in bytes
+*** Example dashboard
+- [[https://play.grafana.org/][https://play.grafana.org/]]
+
 ** Request tracing
 *** Complex service dependencies
 - Services can have complex calling stacks
@@ -389,6 +399,7 @@ Full-text search is often important when dealing with data.
   + Reliability guarantees
   + Scalability and performance characteristics
   + API
+  + Life cycle management and backup of data
   + Installation and operation (for developers)
   + Installation and operation (in production)
 - You can save on the last bullet, but not on the others
@@ -483,7 +494,7 @@ services:
   * /Configmap/: Extra settings for pods, typically becoming a volume in the pod
   * /Deployment/: Automatic replicas and distributed upgrades for pods (and other resources)
 - Ideal for production
-- Configure Memory requests and limits
+- Configure Memory requests and limits (compatible with your heap size)
 - Configure CPU requests
 - Get comfortable getting thread and heap dumps
 - Heap dump on out of memory (this /will/ happen)
@@ -491,7 +502,7 @@ services:
 ** Configuration
 *** Handling of externalized values
 - Externalize "magic numbers" and strings
-- Embrace your framework's ability to have /internal/ and /external/ configuration
+- Use your framework to differentiate between /internal/ and /external/ configuration
   * /Internal/ (inside docker container) has defaults and values that don't really change
   * /External/ (mounted as a volume) has settings specific for that environment and/or server
 - Changes to configuration files
@@ -500,15 +511,17 @@ services:
 - Environment variables for secrets: don't do it (leaking to docker, monitoring tools)
   * use files instead
 - Environment variables for service injection: don't do it (ordering issues)
-  * use dns instead (e.g. dns-java, akka discovery, [...])
+  * use DNS instead (e.g. =dns-java=, =pekko discovery=, [...])
 ** Load balancer
 *** Allowing the world to call your service
 - Deployed kubernetes services only reachable within the cluster
 - Need to define an =ingress=
-  * HTTP-level ([[https://github.com/nginxinc/kubernetes-ingress][NGinx]]) or TCP-level ([[https://github.com/haproxytech/kubernetes-ingress][HAProxy]])
-  * Provided by your native cloud provider
+  * HTTP-level ([[https://github.com/nginxinc/kubernetes-ingress][NGinx]] or [[https://developer.konghq.com/kubernetes-ingress-controller/][Kong]]) or TCP-level ([[https://github.com/haproxytech/kubernetes-ingress][HAProxy]])
+  * Provided by your native cloud provider or kubernetes
   * Hybrid setups
 - Additional, external, load balancer in front of ingress controller
+
+- Pick the simplest setup that satisfies your needs
 * Break(out) 2
 ** Demo project
 *** Get the demo project
@@ -537,8 +550,26 @@ docker-compose up -d
 #+END_SRC
 
 - If you have time, get the code into your favorite IDE and browse around it
+** Alternative: Infrastructure discovery
+*** Introduction
+
+- Resume in your teams
+- Which pieces of infrastructure exist around the services you discovered?
+- Who "owns" or maintains them?
+- How can you set up new infrastructure?
+- Look at all categories of infrastructure:
+  + Servers
+  + Data stores
+  + Load balancers and gateways
+  + Monitoring and dashboards
+  + Others
+*** Discussion
+- Describe the infrastructure you have found
+
 * Data architecture
 ** Domain-driven design
+   [[file:graphics/ddd.jpg]]
+
 *** Introduction
 - Software methodology
   * /Names in code must names used by the business/
@@ -565,19 +596,45 @@ docker-compose up -d
 
 - /Ubiqutous language/: All team members use important terms in the same way
   * Within a bounded context
+*** Implementation patterns
+DDD defines several patterns that are relevant as software architecture during implementation.
+
+- /Entity/: A mutable representation of one business concept
+
+- /Value Object/: An immutable set of data going to or from an /Entity/
+
+- /Aggregate/: A group of /Entities/ that should always have a consistent view
+
+Have you implemented similar patterns? What did you call them?
 *** Event storming workshop
 - We need to quickly learn a new domain
-- /Business process modeling/ and /requirements gathering/
-- Bring together /domain experts/ and /developers/
+  * /Business process modeling/ and /requirements gathering/
+  * Bring together /domain experts/ and /developers/: Invite the right people!
+  * Primary goal is a mutual understanding of the domain
 
+- Alberto Brandolini (2012): [[https://www.eventstorming.com/book/][Event Storming]]
+*** Event storming elements
 - Discover events that occur in the business, and what triggers them
-  * /Business Event/, e.g. /a customer has applied for a loan/
-  * /Command/, e.g. /create a new loan request/
-  * /Actor/, e.g. /loan requester/
-  * /Aggregate/, e.g. /Loan Application/
+  * *Business Event*, e.g. /a customer has applied for a loan/
+    - A change has occurred (in your business or in the real world)
+  * *Command*, e.g. /create a new loan request/
+    - A request or interaction to be made with a system (ours or external)
+    - Decided upon and initiated by a user, or by an external system
+  * *Read model*, e.g. /customer account balance/
+    - Information that a user or external system needs to base
+      commands on
+  * *Actor*, e.g. /loan requester/
+    - Role of a person submitting a command
+  * *Aggregate*, e.g. /Loan Application/
+    - Entity(ies) of a business subdomain that should be viewed
+      atomically
 
 - Why do you think the focus is on /Events/, rather than /Aggregates/?
-** Other patterns
+*** Event storming workshop (example)
+- An small example of all concepts is [[https://excalidraw.com/#json=0g8-tTwSW5KuYNPlmE-D6,ORoF0cInwYjqp18xlr0GUg][here]]
+[[file:graphics/svg/event-storming-excalidraw.png]]
+
+** Data design patterns
 *** Idempotency
 - Allow any failed or repeated action to be applied again
   + With the same result (if previously successful)
@@ -627,7 +684,32 @@ docker-compose up -d
 
 - We'll see CQS again
 ** Data formats
-*** XML
+*** Character encoding history
+- Early computer systems: 7 bits (last bit not transmitted, or used for parity)
+- 1961: [[https://media.geeksforgeeks.org/wp-content/uploads/20240304094301/ASCII-Table.png][ASCII (7-bit)]]
+- /Nøglen er sær/
+- 1978: Code pages (DOS 3.3)
+- 1985: ISO-8859-1
+- 1991: First unicode (16-bit)
+- 1996: Unicode extended to 21-bit (about 1.000.000 code points)
+- 1998: UTF-8
+*** Line endings
+- New line in text documents (including XML):
+  - Windows: =\r\n= (carriage return, line feed) or in bytes: (13, 10)
+  - Mac, Linux: =\n= (line feed) or in bytes: (10)
+  - (old) AS400 (IBM): =0x85= (NEL, 133)
+- This brings issues when collaborating
+  - Both for humans and systems alike
+*** XML: History
+[[https://xkcd.com/927/][Obligatory XKCD]]
+
+- 1986: [[https://en.wikipedia.org/wiki/Standard_Generalized_Markup_Language][SGML]]: Standard Generalized Markup Language (first introduction of =<tags></tags>=, with some wild other syntaxes)
+- 1990: Birth of HTML
+- 1996: XML 1.0, first spec (from /text/ to /data/)
+- 1999: First draft for /namespaces/ in XML
+- 2004: XML 1.1
+- 2004: XSD 1.1 (first usable definition, including namespaces)
+*** XML: Example
 #+BEGIN_SRC xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Invoice
@@ -655,7 +737,13 @@ docker-compose up -d
   * Hard to express "this schema can be extended with extra tags and attributes"
   * Alternatives: /schematron/ (alive) and /relax-ng/ (dead?)
 - Still, a very sensible default choice
-*** JSON
+*** JSON: History
+- 2001: JSON (loading Javascript dynamically)
+- 2013: First "real" JSON standard from ECMA
+- 2017: Latest current JSON standard, RFC 8259
+
+Note: No semantic versioning
+*** JSON: Example
 #+BEGIN_SRC js
 {
   "invoice": {
@@ -680,6 +768,13 @@ docker-compose up -d
   * JavaScript /number/ is a technically a double-precision float (even though in JSON it can contain unlimited digits)
   * Even [[https://json-schema.org/understanding-json-schema/reference/numeric.html][JSON schema]] does not remedy this
 - No comments
+*** JSON: Parser comparison
+It's just Javascript, how hard can it be
+- 2018:[[https://seriot.ch/security/parsing_json.html][Test of about 50 JSON parsers]]
+
+Quiz:
+- How many of those JSON parsers handle all edge cases correctly?
+- How many of those JSON parsers handle all edge cases in the same way?
 *** Protobuf
 #+BEGIN_SRC js
 message SearchRequest {
@@ -743,7 +838,7 @@ public class LambdaDemo {
                     return input + 1;
                 }
             });
-            */
+         */
         System.out.println(result);
     }
 }
@@ -787,7 +882,7 @@ public class TypeInferred {
     static <T> Function<T,T> twice(Function<T,T> fun) {
         return t -> fun.apply(fun.apply(t));
     }
-    
+
     public static void main(String[] args) {
         var twiceAddOne = twice((Integer i) -> i + 1);
         int result = twiceAddOne.apply(10);
@@ -801,22 +896,22 @@ public class TypeInferred {
 
 *** Records (Java 14+)
 
-#+BEGIN_SRC java  :classname Rectangle :results scalar
-public record Rectangle(float length, float width) {
-    public Rectangle {
+#+BEGIN_SRC java  :classname RectDemo :results scalar
+public record Rect(float length, float width) {
+    public Rect {
         System.out.println("This is a compact constructor.");
     }
+}
 
-    public static void main(String[] args) {
-        var r = new Rectangle(5, 3);
-        System.out.println(r);
-    }
+public static void main(String[] args) {
+    var r = new Rect(5, 3);
+    System.out.println(r);
 }
 #+END_SRC
 
 #+RESULTS:
 : This is a compact constructor.
-: Rectangle[length=5.0, width=3.0]
+: Rect[length=5.0, width=3.0]
 
 - A =record= is an immutable value type
   * Each argument is a private, final field
@@ -826,7 +921,12 @@ public record Rectangle(float length, float width) {
 
 - Ideal for data classes, and perhaps domain model
 - Expect JSON and XML code generators to pick these up
-  * JOOQ was [[https://github.com/jOOQ/jOOQ/issues/10287][recently]] updated with =record= support for POJOs (for 3.15.0)
+  * JOOQ was [[https://github.com/jOOQ/jOOQ/issues/10287][updated]] with =record= support for POJOs (for 3.15.0)
+
+*** TODO Switch expressions (Java 21+)
+and pattern matching, guards
+guards only when introducing var
+
 ** Relational databases
 *** Migration management
 - Relational databases change, just like code
@@ -1205,28 +1305,28 @@ Suggestions:
 *** Schedule, Day 2
 |  Time | Duration | Activity                                     | Weight |
 |-------+----------+----------------------------------------------+--------|
-| 13:00 |    00:10 | Welcome, Outline/Agenda                      |        |
-| 13:10 |    00:10 | Recap of day 1                               |        |
-| 13:20 |    00:40 | Homework presentations (4 teams, 8 min each) |        |
+| 09:00 |    00:10 | Welcome, Outline/Agenda                      |        |
+| 09:10 |    00:10 | Recap of day 1                               |        |
+| 09:20 |    00:40 | Homework presentations (4 teams, 8 min each) |        |
 |-------+----------+----------------------------------------------+--------|
-| 14:00 |    00:10 | Break                                        |        |
+| 10:00 |    00:10 | Break                                        |        |
 |-------+----------+----------------------------------------------+--------|
-| 14:10 |    00:20 | Getting your service used                    |     10 |
-| 14:30 |    00:45 | REST patterns                                |     24 |
+| 10:10 |    00:20 | Getting your service used                    |     10 |
+| 10:30 |    00:45 | REST patterns                                |     24 |
 |-------+----------+----------------------------------------------+--------|
-| 15:15 |    00:30 | Breakout 4                                   |        |
+| 11:15 |    00:30 | Breakout 4                                   |        |
 |-------+----------+----------------------------------------------+--------|
-| 15:45 |    00:10 | Discussions of REST results                  |        |
-| 15:55 |    00:20 | Microservice life cycle                      |     12 |
-| 16:15 |    00:10 | Security architecture                        |      5 |
-| 16:25 |    00:15 | Strategy and team dynamics                   |      4 |
-| 16:40 |    00:40 | Asynchronous Java                            |     22 |
+| 11:45 |    00:10 | Discussions of REST results                  |        |
+| 11:55 |    00:20 | Microservice life cycle                      |     12 |
+| 12:15 |    00:10 | Security architecture                        |      5 |
+| 12:25 |    00:15 | Strategy and team dynamics                   |      4 |
+| 12:40 |    00:40 | Asynchronous Java                            |     22 |
 |-------+----------+----------------------------------------------+--------|
-| 17:20 |    00:55 | Breakout 5                                   |        |
+| 13:20 |    00:55 | Breakout 5                                   |        |
 |-------+----------+----------------------------------------------+--------|
-| 18:15 |    00:30 | Presentations of async Java                  |        |
-| 18:45 |    00:15 | Wrap-up, reserved time for extra subjects    |        |
-#+TBLFM: @4$1..@>$1=@-1$2+@-1$1;U
+| 14:15 |    00:30 | Presentations of async Java                  |        |
+| 14:45 |    00:15 | Wrap-up, reserved time for extra subjects    |        |
+#+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
 *** Recap of day 1
 
 Who can tell us something about:
@@ -1808,9 +1908,290 @@ Notes:
 - However, "infra tooling" or "platform" team can be helpful
 - The same holds for the "DBA" team
 * Asynchronous Java
-** Live demo
-*** Link
-Follow [[file:demo-project/GUIDE.org]]
+** What is async and why?
+*** Handling concurrency
+- We expect very large, slow calls (but few of them)
+  * e.g. a slow upload through a mobile network
+  * Use =InputStream= and just slowly read (or =OutputStream= and slowly write)
+  * Block a thread per request
+
+- We expect many simultaneous requests, but small ones
+  * e.g. distributing events to a great many consumers
+  * Use asynchronous servlets (callbacks) or asyncronous Spring MVC (=CompletableFuture=)
+  * Request thread is freed (while typically another does the work)
+
+- We expect many simultaneous requests, and they're big and slow
+  * Now what?
+*** A bit of perspective
+Latency comparison numbers
+
+| Activity                           |      Nanoseconds |                        |
+|------------------------------------+------------------+------------------------|
+| L1 cache reference                 |           0.5 ns |                        |
+| Branch mispredict                  |           5   ns |                        |
+| L2 cache reference                 |           7   ns |                        |
+| Mutex lock/unlock                  |          25   ns |                        |
+| Main memory reference              |         100   ns |                        |
+| Compress 1K bytes with Zippy       |       3,000   ns |                        |
+| Context switch                     |      10,000   ns | (if working set in L2) |
+| Send 1K bytes over 1 Gbps network  |      10,000   ns |                        |
+| Context switch                     |    >100,000   ns | (bigger working set)   |
+| Create a new thread in Java        |     100,000   ns |                        |
+| Read 4K randomly from SSD*         |     150,000   ns |                        |
+| Read 1 MB sequentially from memory |     250,000   ns |                        |
+| Round trip within same datacenter  |     500,000   ns |                        |
+| Read 1 MB sequentially from SSD*   |   1,000,000   ns |                        |
+| Disk seek                          |  10,000,000   ns |                        |
+| Read 1 MB sequentially from disk   |  20,000,000   ns |                        |
+| Send packet CA->Netherlands->CA    | 150,000,000   ns |                        |
+|------------------------------------+------------------+------------------------|
+|                                    |              <r> |                        |
+
+*** Threads are expensive
+- Creating a new thread takes a long time
+- Each thread eats >1MB of overhead (stack, housekeeping, ...)
+- Scheduler has no insight to how /busy/ a thread is
+
+- Keep working on the same data for as long as possible
+** Callbacks
+*** Don't call us, we'll call you
+- Easy to grasp and understand
+#+BEGIN_SRC jshell
+void makeHttpRequest(String url, Consumer<String> handleBody) {
+    System.out.println("Pretending a request to " + url);
+    handleBody.accept("Here's your body!");
+}
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC jshell
+makeHttpRequest("http://test", body -> {
+    for (int i = 0; i < 1; i++) {
+        System.out.println("Got a results: " + body);
+    };
+});
+#+END_SRC
+
+#+RESULTS:
+: Pretending a request to http://test
+: Got a results: Here's your body!
+*** A bit too simple?
+- No guarantees which thread will invoke the callback
+- Up the the implementer to handle locks
+  * Did we talk about deadlock yet?
+
+- Callback "hell"
+#+BEGIN_SRC jshell
+makeHttpRequest("http://test", body -> {
+    writeDatabase(new Entry(body), onDone -> {
+        sendRabbitMQMessage("We're getting there!", onAck -> {
+            log.debug("Finally.");
+        });
+    });
+});
+#+END_SRC
+
+** Future and CompletableFuture
+*** History
+- =Future= introduced to Java in [[https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Future.html][Java 7]]
+  * Handle to an /asynchronous/ computation in progress (typically on a different thread)
+  * Basically can only =.get()=, blocking the calling thread
+  * Cancelling using =.cancel()= usually does nothing
+
+- =CompletableFuture= added in [[https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html][Java 8]]
+  * Extends future with monadic operators
+  * Although curious API choices: =.thenApply()= vs =.map()=, =thenCompose()= vs =.flatMap()=
+*** CompletableFuture examples
+Let's say we have a slow background computation
+#+BEGIN_SRC jshell
+CompletableFuture<Integer> compute(int input) {
+    return CompletableFuture.supplyAsync(() -> {
+        System.out.println("Starting computation for " + input);
+        try { Thread.sleep(200); } catch (InterruptedException x) {}
+        return input * input;
+    });
+}
+#+END_SRC
+
+#+RESULTS:
+
+We can turn it into a string once the computation completes:
+
+#+BEGIN_SRC jshell
+CompletableFuture<String> willbe = compute(4).thenApply(i -> i.toString());
+System.out.println("Printing now!");
+System.out.println(willbe.get());
+#+END_SRC
+
+#+RESULTS:
+: Starting computation for 4
+: Printing now!
+: 16
+*** CompletableFuture examples
+We can also wait on another computation, when the first one completes:
+#+BEGIN_SRC jshell
+CompletableFuture<Integer> composed = compute(4).thenCompose(i -> compute(i));
+System.out.println(composed.get());
+#+END_SRC
+
+#+RESULTS:
+: Starting computation for 4
+: Starting computation for 16
+: 256
+*** Summary
+- =CompletableFuture= is more expressive than callbacks
+- Wacky API
+- Complicated error handling (exceptions wrapped in =CompletionException=, because of cancellation that doesn't work)
+
+- But, most importantly
+  * Does this help with handling our big, slow, input, with many concurrent users?
+** Reactive Streams
+*** Reactive manifesto
+- Developers realized that "one thread per request" and "exceptions" wasn't cutting it anymore
+- 2016: The [[https://www.reactivemanifesto.org/][Reactive Manifesto]] (30k+ people). Reactive systems are:
+  * /Responsive/
+    + The system responds in a timely manner if at all possible.
+  * /Resilient/
+    + The system stays responsive in the face of failure.
+  * /Elastic/
+    + The system stays responsive under varying workload.
+  * /Message Driven/
+    + Reactive Systems rely on asynchronous message-passing to establish a boundary between components that ensures loose coupling, isolation and location transparency.
+*** Reactive streams
+- Reactive streaming concept developed several times separately
+  * /rxJava/ (2014)
+  * /Akka Streams/ (2015)
+  * /Project Reactor/ (2015)
+  * Many others
+- Interoperability through =java.util.concurrent.Flow=
+  * Low-level
+*** Akka Streams
+- Mature, large ecosystem of [[https://doc.akka.io/docs/alpakka/current/index.html][integrations]]
+- Tight integration with other asynchronous concepts (e.g. actors)
+- Tight integration with network I/O (streams of bytes)
+- Well-[[https://doc.akka.io/docs/akka/current/stream/index.html][documented]] [[https://doc.akka.io/api/akka/current/akka/stream/javadsl/Source.html][API]]
+
+- Many concepts presented here also apply to other libraries
+*** Akka Streams concepts
+#+BEGIN_SRC plantuml :file graphics/streams.png :hidden
+skinparam dpi :dpi
+partition "Graph" {
+:source;
+#aliceblue:(T)
+:flow;
+#aliceblue:(U)
+:sink;
+}
+#+END_SRC
+
+#+RESULTS:
+[[file:graphics/streams.png]]
+
+
+- /Graph/ is a *blueprint* for a closed, finite network of *stages*, which communicate by streaming elements
+- =GraphStage<S extends Shape>.= is one processing stage within a graph
+  * taking elements in through zero or more *Inlets*
+  * emitting through *Outlets*
+- It's completely up to the stage when and how to respond to arriving elements
+- All built-in graph stages embrace /backpressure/ and /bounded processing/
+
+*** Akka graph stage types
+[[file:streams.png]]
+
+- =Source<T, M>.= has one outlet of type =T=
+- =Sink<T, M>.= has one inlet of type =T=
+- =Flow<A, B, M>.= has one inlet of type =A= and one outlet of type =B=
+- =RunnableGraph<M>.= has no inlets or outlets
+
+*** Hello, streams
+Let's do a hello world with some numbers:
+#+BEGIN_SRC jshell
+ActorSystem system = ActorSystem.create("QuickStart");
+Materializer materializer = ActorMaterializer.create(system);
+
+Source<Integer, NotUsed> numbers = Source.range(1, 3);
+
+Sink<Integer, CompletionStage<Done>> print =
+    Sink.foreach(i -> System.out.println(i));
+
+CompletionStage<Done> done = numbers.runWith(print, materializer);
+
+done.toCompletableFuture().get();
+#+END_SRC
+
+#+RESULTS:
+: Done
+: 1
+: 2
+: 3
+
+*** Stream materialization
+
+- _Graph_ is only a blueprint: nothing runs until it's given to a _materializer_, typically =ActorMaterializer=
+- All graph stages are generic in their materialized type =M=
+- Graph can be materialized more than once by calling =run()= or =runWith()=
+
+#+BEGIN_SRC java
+class Source<T, M> {
+  // A graph which materializes into the M2 of the sink (ignoring source's M)
+  public RunnableGraph<M2> to(Sink<T,M2> sink);
+
+  // Materializes, and returns the M of the sink (ignoring this source's M)
+  public <M2> M2 runWith(Sink<T, M2> sink, Materializer m) { ... }
+
+  // A graph which materializes into the result of applying [combine] to
+  // this source's M and the sink's M2
+  public <M2, MR> RunnableGraph<MR> toMat(Sink<T,M2> sink,
+                                          Function2<M,M2,MR> combine);
+}
+
+class RunnableGraph<M> {
+  public M run(Materializer m);
+}
+#+END_SRC
+
+*** Reusable pieces
+- =Source=, =Sink= and =Flow= are all normal, immutable objects, so they're ideal to be constructed in reusable factory methods:
+#+BEGIN_SRC jshell
+public Sink<String, CompletionStage<IOResult>> lineSink(String filename) {
+  Sink<ByteString, CompletionStage<IOResult>> file = FileIO.toPath(Paths.get(filename));
+
+  return Flow.of(String.class)
+    .map(s -> ByteString.fromString(s + "\n"))
+    .toMat(file, Keep.right());
+}
+#+END_SRC
+
+#+RESULTS:
+
+Let's write our numbers to a file!
+#+BEGIN_SRC jshell
+numbers
+  .map(i -> i.toString())
+  .runWith(lineSink("/tmp/numbers.txt"), materializer).toCompletableFuture().get();
+#+END_SRC
+
+#+RESULTS:
+: IOResult(6,Success(Done))
+
+*** Time-based processing
+#+BEGIN_SRC java
+Source<Integer, NotUsed> numbers = Source.range(1, 100000000);
+
+Sink<Integer, CompletionStage<Done>> print =
+    Sink.foreach(i -> System.out.println(i));
+
+CompletionStage<Done> done = numbers
+    .throttle(1, Duration.create(1, TimeUnit.SECONDS), 1,
+              ThrottleMode.shaping())
+    .runWith(print, materializer);
+#+END_SRC
+
+- This does what you expect: print one message per second
+- No =OutOfMemoryError=, akka buffers only as needed: /backpressure/
+
+
 * Break(out) 5
 ** Streams
 *** A directory crawler
