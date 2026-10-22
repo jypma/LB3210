@@ -36,24 +36,25 @@ Slides available here:
 | 09:30 |    00:10 | What's a microservice                     |      4 |
 | 09:40 |    00:20 | Design for resilience                     |     12 |
 |-------+----------+-------------------------------------------+--------|
-| 10:00 |    00:20 | Break(out) 1                              |        |
+| 10:00 |    00:30 | Break(out) 1: Service discovery           |        |
 |-------+----------+-------------------------------------------+--------|
-| 10:20 |    00:15 | Discussion of breakout results            |        |
-| 10:35 |    00:45 | Infrastructure architecture               |     27 |
+| 10:30 |    00:20 | Discussion of breakout results            |        |
+| 10:50 |    00:45 | Infrastructure architecture               |     27 |
 |-------+----------+-------------------------------------------+--------|
-| 11:20 |    00:20 | Break(out) 2                              |        |
+| 11:35 |    00:20 | Break(out) 2: Project setup               |        |
 |-------+----------+-------------------------------------------+--------|
-| 11:40 |    00:30 | Data architecture                         |     13 |
+| 11:55 |    00:20 | Data architecture (DDD, Patterns)         |     13 |
 |-------+----------+-------------------------------------------+--------|
-| 12:10 |    00:10 | Break                                     |        |
+| 12:15 |    00:30 | Lunch                                     |        |
 |-------+----------+-------------------------------------------+--------|
-| 12:20 |    00:45 | Software architecture                     |     28 |
-| 13:05 |    00:10 | Demo project API demo and code overview   |      5 |
+| 12:45 |    00:20 | Data architecture (Formats)               |        |
+| 13:05 |    00:45 | Software architecture                     |     28 |
+| 13:50 |    00:10 | Demo project API demo and code overview   |      5 |
 |-------+----------+-------------------------------------------+--------|
-| 13:15 |    00:55 | Break(out) 3                              |        |
+| 14:00 |    00:55 | Break(out) 3: Extend project              |        |
 |-------+----------+-------------------------------------------+--------|
-| 14:10 |    00:30 | Presentation(s) of extended demo project  |        |
-| 14:40 |    00:40 | Wrap-up, reserved time for extra subjects |        |
+| 14:55 |    00:30 | Presentation(s) of extended demo project  |        |
+| 15:25 |    00:35 | Wrap-up, reserved time for extra subjects |        |
 |-------+----------+-------------------------------------------+--------|
 #+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
 *** Talk about yourself
@@ -222,7 +223,7 @@ Half_Open -> Open : [failure rate above threshold]
   * =git=
   * =docker-compose=
   * =maven=
-  * =java= (8+, preferably 11+)
+  * =java= (21+)
 
 *** Discussion
 - Describe the services you have found
@@ -516,7 +517,7 @@ services:
 *** Allowing the world to call your service
 - Deployed kubernetes services only reachable within the cluster
 - Need to define an =ingress=
-  * HTTP-level ([[https://github.com/nginxinc/kubernetes-ingress][NGinx]] or [[https://developer.konghq.com/kubernetes-ingress-controller/][Kong]]) or TCP-level ([[https://github.com/haproxytech/kubernetes-ingress][HAProxy]])
+  * HTTP-level ([[https://github.com/nginxinc/kubernetes-ingress][NGinx]] or [[https://developer.konghq.com/kubernetes-ingress-controller/][Kong]], "API gateway") or TCP-level ([[https://github.com/haproxytech/kubernetes-ingress][HAProxy]])
   * Provided by your native cloud provider or kubernetes
   * Hybrid setups
 - Additional, external, load balancer in front of ingress controller
@@ -531,7 +532,7 @@ This course, and its accompanying Spring Boot demo project, are on github.
   * =git=
   * =docker-compose=
   * =maven=
-  * =java= (8+, preferably 11+)
+  * =java= (21+)
 
 - Get the course and code
 #+BEGIN_SRC sh
@@ -923,10 +924,155 @@ public static void main(String[] args) {
 - Expect JSON and XML code generators to pick these up
   * JOOQ was [[https://github.com/jOOQ/jOOQ/issues/10287][updated]] with =record= support for POJOs (for 3.15.0)
 
-*** TODO Switch expressions (Java 21+)
-and pattern matching, guards
-guards only when introducing var
+*** Original java =switch= statement
+#+BEGIN_SRC java
+String Animal = ???;
+int legs;
+switch (animal) {
+    case "DOG":
+    case "CAT":
+        legs = 4;
+        break;
+    case "SPIDER":
+        legs = 8;
+        break;
+    default:
+        legs = 0;
+        break;
+}
+#+END_SRC
+- Is a statement (no return value)
+- Only primitives, =enum= or =String=
+- Can't check =null=
+- Fallthrough
+- Cases must be compile-time expressions (can't =case myFavouriteAnimal:=)
 
+*** Java 13: =switch= expression
+#+BEGIN_SRC java
+var legs = switch(animal) {
+    case "DOG", "CAT" -> 4;
+    case "SPIDER" -> 8;
+    default -> 0;
+};
+#+END_SRC
+- No fallthrough
+- Multiple values allowed
+- After =->= an expression is expected, which is returned
+
+*** Java 13: =yield= and =return=
+#+BEGIN_SRC java
+var legs = switch(animal) {
+    case "DOG", "CAT" -> 4;
+    case "SPIDER" -> {
+        log.debug("We got a scary animal!");
+        yield 8;
+    }
+    default -> 0;
+};
+#+END_SRC
+- You can start an expression block after =->=
+- Use =yield= to hand back a result from that block to the =switch= expression
+- The =return= keyword will always return from the enclosing method
+*** Java 18: =null= allowed
+We can now also use =null= in switch expressions:
+#+BEGIN_SRC java
+var legs = switch(animal) {
+    case "DOG", "CAT" -> 4;
+    case "SPIDER" -> {
+        log.debug("We got a scary animal!");
+        yield 8;
+    }
+    case null -> 0;
+    default -> 0;
+};
+#+END_SRC
+*** Java 18: Exhaustiveness
+#+BEGIN_SRC java
+enum Animal {DOG, CAT, SPIDER}
+
+var legs = switch(animal) {
+    case DOG, CAT -> 4;
+}
+#+END_SRC
+The above does not compile. We have to either:
+- Add the remaining enum value
+OR
+- Add a =default= case
+*** Checking the subtype of an object
+A common case is checking the subtype of a class:
+#+BEGIN_SRC java
+Object o;
+double result;
+if (o instanceof Integer) {
+    result = ((Integer) o).doubleValue();
+} else if (o instanceof Float) {
+    result = ((Float) o).doubleValue();
+} else if (o instanceof String) {
+    result = Double.parseDouble(((String) o));
+}
+#+END_SRC
+*** Java 16: Pattern matching for =if=
+We can now introduce typed variables after =if=.
+#+BEGIN_SRC java
+Object o;
+double result;
+if (o instanceof Integer i) {
+    result = i.doubleValue();
+} else if (o instanceof Float f) {
+    result = f.doubleValue();
+} else if (o instanceof String s) {
+    result = Double.parseDouble(s);
+}
+#+END_SRC
+*** Java 21: Pattern matching for =switch=
+Let's use the same trick with =switch=.
+#+BEGIN_SRC java
+double result = switch (o) {
+    case Integer i -> i.doubleValue();
+    case Float f -> f.doubleValue();
+    case String s -> Double.parseDouble(s);
+    default -> 0d;
+};
+#+END_SRC
+*** Java 21: Guards
+In switch expressions, we can add a predicate to any branch.
+#+BEGIN_SRC java
+String result = switch(o) {
+    case Integer i when i > 0 -> "+" + i;
+    case Integer i -> "" + i;
+    case String s -> s;
+    default -> "huh?";
+}
+#+END_SRC
+*** Java 21: Destructuring records
+#+BEGIN_SRC java
+public record Address (String city, String street, int house) {}
+public record Person (String name, Address address) {}
+#+END_SRC
+We can now introduce variables for record fields, both in =if= and =switch=.
+#+BEGIN_SRC java
+if (o instanceof Person (String name, Address address)) {
+    System.out.println(name);
+}
+#+END_SRC
+This also works for nested records.
+#+BEGIN_SRC java
+if (o instanceof Person (String name, Address(String city, String street, int house))) {
+    System.out.println(city);
+}
+#+END_SRC
+But, we've had =var= for a while, so let's shorten this.
+#+BEGIN_SRC java
+if (o instanceof Person (var name, Address(var city, var street, var house))) {
+    System.out.println(city);
+}
+#+END_SRC
+We can use an /unnamed pattern/ to shorten this further (preview in Java 21, final in Java 24)
+#+BEGIN_SRC java
+if (o instanceof Person (_, Address(var city, _, _))) {
+    System.out.println(city);
+}
+#+END_SRC
 ** Relational databases
 *** Migration management
 - Relational databases change, just like code
@@ -1169,7 +1315,7 @@ public void handleMessageFromRabbit(String message) {
   - JOOQ uses lambdas to demarcate transactions
 - Advantages
   * Discoverability, Composability, Testability
-- Sneak peak into lambdas for handling HTTP ([[https://doc.akka.io/docs/akka-http/current/routing-dsl/routes.html][akka-http]]):
+- Sneak peak into lambdas for handling HTTP ([[https://pekko.apache.org/docs/pekko-http/current/][pekko-http]]):
 #+BEGIN_SRC java
 Route route = path("users", () ->
     concat(
@@ -1303,29 +1449,31 @@ Suggestions:
 * Start of day 2
 ** Getting started
 *** Schedule, Day 2
-|  Time | Duration | Activity                                     | Weight |
-|-------+----------+----------------------------------------------+--------|
-| 09:00 |    00:10 | Welcome, Outline/Agenda                      |        |
-| 09:10 |    00:10 | Recap of day 1                               |        |
-| 09:20 |    00:40 | Homework presentations (4 teams, 8 min each) |        |
-|-------+----------+----------------------------------------------+--------|
-| 10:00 |    00:10 | Break                                        |        |
-|-------+----------+----------------------------------------------+--------|
-| 10:10 |    00:20 | Getting your service used                    |     10 |
-| 10:30 |    00:45 | REST patterns                                |     24 |
-|-------+----------+----------------------------------------------+--------|
-| 11:15 |    00:30 | Breakout 4                                   |        |
-|-------+----------+----------------------------------------------+--------|
-| 11:45 |    00:10 | Discussions of REST results                  |        |
-| 11:55 |    00:20 | Microservice life cycle                      |     12 |
-| 12:15 |    00:10 | Security architecture                        |      5 |
-| 12:25 |    00:15 | Strategy and team dynamics                   |      4 |
-| 12:40 |    00:40 | Asynchronous Java                            |     22 |
-|-------+----------+----------------------------------------------+--------|
-| 13:20 |    00:55 | Breakout 5                                   |        |
-|-------+----------+----------------------------------------------+--------|
-| 14:15 |    00:30 | Presentations of async Java                  |        |
-| 14:45 |    00:15 | Wrap-up, reserved time for extra subjects    |        |
+|  Time | Duration | Activity                                  | Weight |
+|-------+----------+-------------------------------------------+--------|
+| 09:00 |    00:10 | Welcome, Outline/Agenda                   |        |
+| 09:10 |    00:10 | Recap of day 1                            |        |
+|-------+----------+-------------------------------------------+--------|
+| 09:20 |    00:20 | Getting your service used                 |     10 |
+| 09:40 |    00:45 | REST patterns                             |     24 |
+| 10:25 |    00:10 | REST examples                             |     24 |
+|-------+----------+-------------------------------------------+--------|
+| 10:35 |    00:60 | Breakout 4: Event storming                |        |
+|-------+----------+-------------------------------------------+--------|
+| 11:35 |    00:30 | Lunch                                     |        |
+|-------+----------+-------------------------------------------+--------|
+| 12:05 |    00:30 | Breakout 5: API design                    |        |
+|-------+----------+-------------------------------------------+--------|
+| 12:35 |    00:25 | Discussions of REST results               |        |
+| 13:00 |    00:20 | Microservice life cycle                   |     12 |
+| 13:20 |    00:10 | Security architecture                     |      5 |
+| 13:30 |    00:15 | Strategy and team dynamics                |      4 |
+| 13:45 |    00:40 | Asynchronous Java                         |     22 |
+|-------+----------+-------------------------------------------+--------|
+| 14:25 |    00:55 | Breakout 5: Streaming crawler             |        |
+|-------+----------+-------------------------------------------+--------|
+| 15:20 |    00:30 | Presentations of async Java               |        |
+| 15:50 |    00:10 | Wrap-up, reserved time for extra subjects |        |
 #+TBLFM: @3$1..@>$1=@-1$2+@-1$1;U
 *** Recap of day 1
 
@@ -1600,7 +1748,7 @@ Accept: application/json;q=0.9, text/xml
 - How easy it is to support depends on your framework
   * /Spring Boot/ has many different ways to manage resource representation
     + Look into =HttpMessageConverter=, so you can take control
-  * Others, e.g. =akka-http= has a marshaling infrastructure that directly models content-type negotiation
+  * Others, e.g. =pekko-http= has a marshaling infrastructure that directly models content-type negotiation
 ** Asynchronous and long-running processes
 *** Case: REST API to represent workflow instances
 - Start a new workflow
@@ -1775,9 +1923,101 @@ Notes:
 - Overloading of HTTP status code in the response
 - No obvious way to explore the API further (how do I load a photo?)
 
-* Break(out) 4
+* Break(out) 4: Event storming
+** Let's hold an event storming workshop
+*** Domain scope
+- Let's find a domain and scope for the events we want to discover
+  + Is there a shared system, or domain, most of you have worked on?
+  + Is there a shared system, or domain, most of you know is important for your business?
+*** Alternative: Pet Shop
+(skip if domain is found)
+
+- Let's model a pet shop!
+  + Our family owns a pet shop, which has a building that houses pets for sale
+  + We regularly sell pets, and re-stock
+  + Pets need to be fed
+  + Some pets have special other needs
+  + We only want to house cute pets!
+
+- We want to automate as much as we can, and hence hold an event storming workshop
+** Event storming stages
+*** Big picture
+- Distribute orange post-its
+
+- Remember, an event is in PAST TENSE, e.g.:
+   /Missiles have been launched/
+   /User has subscribed to newsletter/
+
+- Designate a wall as space
+  + Create time marker. Time flows roughly from left to right (where relevant)
+
+- Start with "pivot" event in center
+
+- Write other events that come to mind
+  + Order with existing events, keeping time
+  + Feel free to rename as discussions occur
+*** Big picture: Need more?
+- Full narrative (1 person)
+- Reverse narrative
+*** Pivotal events and boundaries
+- /Pivotal event/ is an event that is of particular business importance (and value)
+  + Spawns new business processes
+  + Involves new stakeholders
+  + Commits the business to a financial risk or responsibility
+  + Confirms the business receiving a financial benefit
+
+- Can we, along pivotal events, distinguish /Bounded Contexts/ in our events?
+
+*** Process modeling
+- Distribute blue, yellow, green and pink post-its
+  + Blue: /command/
+  + Yellow (small): /actor (persona)/
+  + Pink: /external system, department, time/
+  + Green: /read model/
+
+- Remember, a command is in IMPERATIVE, e.g.
+  /Launch missiles/
+  /Register user subscription request/
+
+- Consider limiting scope to a part of what we modeled as Big Picture
+
+- Select important events, that related to something a system could do for us
+  + What command could cause this event? (blue)
+  + Who or what can trigger this command?
+    * Who: Actor (yellow)
+    * What: External system (pink)
+  + What information is needed to construct the command (green)
+
+*** Aggregates
+- What nouns have we discovered that are good candidates for aggregates?
+  + Yellow (large): /aggregate/
+  + Group the commands by aggregate
+
+- What aggregates would be good candidates for microservices?
+*** Link to BDD
+- Take another look at some sets of related events and commands
+- Can you formulate a sentence:
+  + /Given/ (a statement related to events happened before)
+  + /When/ (an event occurs, or a command is sent)
+  + /Then/ (another event occurs, or another command is sent)
+
+* Break(out) 5: API Design
 ** Designing an API
-*** Write a RAML file for an invoicing API
+*** Write a RAML file for the API of the system we've created events for
+- Identify /resources/ from /aggregates/ (and other nouns on the events)
+- The /commands/ are good candidates for methods (GET, PUT, POST, DELETE)
+- The /read model/ notes are a good starting point for request and response body
+
+1. Start with resources
+2. Then, add http methods
+3. Add request and response body examples if you have time
+
+- View [[file:demo-project/documentation/demo-api.raml]] if you need an example RAML file
+- Hints:
+  * RAML documentation and on-line editor: https://raml.org/
+  * RAML 1.0 spec: https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md/
+
+*** Alternative: Write a RAML file for an invoicing API
 - We're writing an invoicing service, that can send and receive invoices between companies
 
 - We need APIs to:
@@ -2066,14 +2306,14 @@ System.out.println(composed.get());
   * Many others
 - Interoperability through =java.util.concurrent.Flow=
   * Low-level
-*** Akka Streams
-- Mature, large ecosystem of [[https://doc.akka.io/docs/alpakka/current/index.html][integrations]]
+*** Pekko Streams
+- Mature, large ecosystem of [[https://pekko.apache.org/docs/pekko-connectors/current/][integrations]]
 - Tight integration with other asynchronous concepts (e.g. actors)
 - Tight integration with network I/O (streams of bytes)
-- Well-[[https://doc.akka.io/docs/akka/current/stream/index.html][documented]] [[https://doc.akka.io/api/akka/current/akka/stream/javadsl/Source.html][API]]
+- Well-[[https://pekko.apache.org/docs/pekko/current/stream/][documented]] API
 
 - Many concepts presented here also apply to other libraries
-*** Akka Streams concepts
+*** Pekko Streams concepts
 #+BEGIN_SRC plantuml :file graphics/streams.png :hidden
 skinparam dpi :dpi
 partition "Graph" {
@@ -2096,7 +2336,7 @@ partition "Graph" {
 - It's completely up to the stage when and how to respond to arriving elements
 - All built-in graph stages embrace /backpressure/ and /bounded processing/
 
-*** Akka graph stage types
+*** Pekko graph stage types
 [[file:streams.png]]
 
 - =Source<T, M>.= has one outlet of type =T=
@@ -2207,11 +2447,12 @@ CompletionStage<Done> done = numbers
     + =POST http://localhost:8080/values=
 
 - Some tips:
-  * List files: https://doc.akka.io/docs/alpakka/current/file.html#listing-directory-contents
-  * Read a file's contents: https://doc.akka.io/docs/akka/current/stream/stream-io.html#streaming-file-io
+  * List files: https://pekko.apache.org/docs/pekko-connectors/current/file.html#listing-directory-contents
+  * Read a file's contents: https://pekko.apache.org/docs/pekko/current//stream/stream-io.html#streaming-file-io
   * Make http request
-    + Spring: https://docs.spring.io/spring-android/docs/current/reference/html/rest-template.html
-    + Akka: https://doc.akka.io/docs/alpakka/current/file.html#listing-directory-contents
+    + Plain Java: https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.html
+    + Spring: https://docs.spring.io/spring-framework/docs/3.0.x/javadoc-api/org/springframework/web/client/RestTemplate.html
+    + Pekko:https://pekko.apache.org/docs/pekko-http/current/client-side/request-level.html
   * Run a specific Java main class:
 #+BEGIN_SRC sh
 mvn exec:java -Dexec.mainClass="com.example.Main"
