@@ -4,3 +4,8 @@ target
 .classpath
 /*.png
 /*.svg
+/demo-project/GUIDE.tex
+/demo-project/_minted-GUIDE/
+.mvn
+/solutions/exercise-3-chat-room/bin/
+/_minted-LB3210/

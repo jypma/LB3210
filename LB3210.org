@@ -364,6 +364,10 @@ Full-text search is often important when dealing with data.
   * Service needs to run extra HTTP server
   * Does not compose (multiple metrics backends need to be known on the prometheus side)
   * Advantages: less timing-sensitive
+
+- Most popular solution today: [[https://prometheus.io/][Prometheus]]
+  + Natively pull-based
+  + Has many connectors to allow push-based systems to contribute metrics
 *** Metrics terminology
 - Different frameworks use different terms
 - [[https://micrometer.io/][Micrometer]] uses the following:
@@ -502,7 +506,7 @@ services:
   * =-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps= to an =emptyDir= volume
 ** Configuration
 *** Handling of externalized values
-- Externalize "magic numbers" and strings
+- Externalize "magic numbers" and strings into configuration files
 - Use your framework to differentiate between /internal/ and /external/ configuration
   * /Internal/ (inside docker container) has defaults and values that don't really change
   * /External/ (mounted as a volume) has settings specific for that environment and/or server
@@ -629,12 +633,11 @@ Have you implemented similar patterns? What did you call them?
   * *Aggregate*, e.g. /Loan Application/
     - Entity(ies) of a business subdomain that should be viewed
       atomically
-
-- Why do you think the focus is on /Events/, rather than /Aggregates/?
 *** Event storming workshop (example)
 - An small example of all concepts is [[https://excalidraw.com/#json=0g8-tTwSW5KuYNPlmE-D6,ORoF0cInwYjqp18xlr0GUg][here]]
 [[file:graphics/svg/event-storming-excalidraw.png]]
 
+- Why do you think the focus is on /Events/, rather than /Aggregates/?
 ** Data design patterns
 *** Idempotency
 - Allow any failed or repeated action to be applied again
@@ -1238,7 +1241,7 @@ int calculateAverage(List<Integer> items) {
 [[file:graphics/multithread.jpg]]
 *** VAVR
 - Library for Java 8+ for functional programming and immutability
-- As an example, let's look at [[https://www.javadoc.io/doc/io.vavr/vavr/latest/io/vavr/collection/List.html][io.vavr.collection.List]]
+- As an example, let's look at [[https://www.javadoc.io/doc/io.vavr/vavr/latest/io/vavr/collection/List.html][io.vavr.collection.List]] (a linked list)
 #+BEGIN_SRC java
 import io.vavr.collection.*;
 
@@ -1249,22 +1252,28 @@ List<Integer> larger = list1.append(4).append(5);
 
 // Let's turn all integers to strings
 List<String> strings = larger.map(i => i.toString());
+
+// Let's turn each list into several elements and flatten them:
+List<Integer> replicated = list1.flatMap(i -> List.range(0, i));
+// 0, 0, 1, 0, 1, 2
 #+END_SRC
+*** VAVR (contd.)
 - Other useful types from =io.vavr.collection=:
   * =Vector<T>;= (an immutable /hash trie/, with efficient inserting and removing)
   * =HashMap<K,V>;= (an immutable hash map)
 
 - Useful control data structures in =io.vavr.control=:
-  * =Option<T>;= (single-valued element, which can either be =None= or =Some(value)=)
+  * =Option<T>= : single-valued element, which can either be =None= or =Some(value)=
     + This is the preferred way of handling potentially-absent values
-  * =Either<L,R>;= (single-valued element, which can either be =Left(leftValue)= or =Right(rightValue)= )
+  * =Either<L,R>= : single-valued element, which can either be =Left(leftValue)= or =Right(rightValue)=
     + This is the preferred way of handling values (R) that may have failed with an error (L)
+  * =Validation<E,T>= : variant that can combine multiple errors, or a result value
 *** Null-free style
 - =NullPointerException= is hiding in every =.= in traditional java
 
 - There's no need to use =null= anymore to carry semantic value in new applications
   * In plain JDK, there's =java.util.Optional=
-  * For more integration with collections, there's VAVR
+  * For more integration with collections, there's VAVR's =Option=
 
 - =@NotNull= ?
 
@@ -1312,7 +1321,7 @@ public void handleMessageFromRabbit(String message) {
 *** Functional style
 - Java libraries are starting to use lambdas as defaults over annotations
   - Resilience4J uses lambdas to wrap circuit breaker, bulkhead
-  - JOOQ uses lambdas to demarcate transactions
+  - JOOQ can use lambdas to demarcate transactions
 - Advantages
   * Discoverability, Composability, Testability
 - Sneak peak into lambdas for handling HTTP ([[https://pekko.apache.org/docs/pekko-http/current/][pekko-http]]):
@@ -1349,37 +1358,13 @@ Content-Type: text/plain
 Here's a chat message going to room "myroom"!
 #+END_SRC
 
-#+RESULTS:
-#+BEGIN_SRC js
-// POST http://localhost:8080/rooms/myroom/messages
-// HTTP/1.1 201
-// Location: http://localhost:8080/rooms/myroom/messages
-// Content-Length: 0
-// Date: Mon, 31 May 2021 16:11:07 GMT
-// Keep-Alive: timeout=60
-// Connection: keep-alive
-// Request duration: 0.005855s
-#+END_SRC
-
   * Get the current messages in a room
 #+BEGIN_SRC restclient
 GET http://localhost:8080/rooms/myroom/messages
 Accept: text/plain
 #+END_SRC
 
-#+RESULTS:
-#+BEGIN_SRC text
-Here's a chat message going to room "myroom"!
-Here's a chat message going to room "myroom"!
-GET http://localhost:8080/rooms/myroom/messages
-HTTP/1.1 200
-Content-Type: text/plain;charset=UTF-8
-Content-Length: 91
-Date: Mon, 31 May 2021 16:11:11 GMT
-Keep-Alive: timeout=60
-Connection: keep-alive
-Request duration: 0.019415s
-#+END_SRC
+Data need not be persisted (yet).
 
 *** Bonus points:
   * Create a data schema migration and actually store the messages
@@ -1443,9 +1428,7 @@ Suggestions:
 * Wrapping up today
 ** Let's do another round
 *** Please share!
-- Name one thing that you learned
-- Name one thing that you knew already
-- Name one thing that surprised you
+
 * Start of day 2
 ** Getting started
 *** Schedule, Day 2
@@ -1454,8 +1437,8 @@ Suggestions:
 | 09:00 |    00:10 | Welcome, Outline/Agenda                   |        |
 | 09:10 |    00:10 | Recap of day 1                            |        |
 |-------+----------+-------------------------------------------+--------|
-| 09:20 |    00:20 | Getting your service used                 |     10 |
-| 09:40 |    00:45 | REST patterns                             |     24 |
+| 09:20 |    00:45 | REST patterns                             |     24 |
+| 10:05 |    00:20 | Getting your service used                 |     10 |
 | 10:25 |    00:10 | REST examples                             |     24 |
 |-------+----------+-------------------------------------------+--------|
 | 10:35 |    00:60 | Breakout 4: Event storming                |        |
@@ -1489,60 +1472,6 @@ Who can tell us something about:
 - Make sure to get the latest project changes:
   * =git pull= to get latest updates
 
-* Getting your service used
-** Public API
-*** An API is an interface
-- /Application Programming Interface/
-  * It's how external components affect what our service does
-  * Better lay down some rules
-- But our service is only used by our team, we don't need documentation!
-- Ideal for test-first development
-- Where do I put my private API?
-*** Example API
-- Let's look at an [[file:demo-project/documentation/demo-api.html][example API]] example API together
-  * Its [[file:demo-project/documentation/demo-api.raml][RAML source]] is available
-- Semantic format for describing REST APIs: RAML, OpenAPI
-  * RAML: YAML-based, better re-use, easier to write by hand
-  * OpenAPI: JSON/YAML-based, more popular
-*** Content-type negotiation
-- Embrace content-type negotiation (XML /and/ JSON, not XML /or/ JSON)
-- XML API:
-  * Do create XSD for your data types, but communicate how it should be interpreted
-  * Do you reserve the right to add new tags and attributes?
-- JSON API:
-  * Create JSON schemas for everything
-  * In addition, verbosely describe all numeric types and their intended usage
-
-** Public developer guide
-*** But I've written the documentation!
-- Just a list of endpoints may not be enough for some developers
-- Lot of context and assumed knowledge
-  * Ubiquitous language may not extend to all new API users
-  * Lack of experience with JSON, XML, HTTP headers
-*** Different people, different learning styles
-- Write a developer guide that describes typical scenarios from a user's perspective
-  * How to get started (e.g. get an SSL certificate)
-  * How to list widgets in XML or JSON
-  * How to create a new widget
-- There's no shame in taking an English technical writing course
-- Pick tooling that suits your way of working (e.g. =HTTPie=, =org-mode= with =org-babel=, ...)
-** Public service dashboard
-*** Priorities!
-- What's the first thing you do when you get to your office?
-
-- Users will be curious about your service status
-  * If your users are internal, give them access to the actual dashboard
-  * In fact, consider giving them access to your source code and issue tracker as well
-*** Designing your dashboard
-- Your dashboard should be showing
-  * System metrics (load average, disk space, CPU usage, memory usage, network I/O, disk I/O)
-  * Your process' metrics (CPU usage, memory usage)
-  * Your VM's metrics (Heap committed, heap used, GC time, thread count, log count)
-  * Your framework's metrics (HTTP server open connections, HTTP client open connections, response times, response errors)
-  * Your business metrics (number of pets signed up, total invoice amount, size of received chat messages)
-
-- For each environment, after a few days examine the graphs
-  * Establish a baseline, and create an alert for /each/ metric
 * An introduction to REST
 ** REST philosophy
 - *World-wide web* (1990): HTTP over internet, with hypermedia (HTTP)
@@ -1653,6 +1582,65 @@ This is not a full list.
 - Size limits on everything (do we need to stream or read it in memory?)
 - XML, JSON, CSV, text, protobuf (more content-type negotiation later)
 - Decide on a /Service Level Objective/ for your API (yes, already now)
+* Getting your service used
+** Public API
+*** An API is an interface
+- /Application Programming Interface/
+  * It's how external components affect what our service does
+  * Better lay down some rules
+- But our service is only used by our team, we don't need documentation!
+- Ideal for test-first development
+- Where do I put my private API?
+*** Example API
+- Semantic format for describing REST APIs
+  * RAML: YAML-based, better re-use, easier to write by hand
+    + Content format agnostic
+    + Unfortunately, not that maintained anymore
+  * OpenAPI: JSON/YAML-based, more popular
+    + JSON-biased
+    + "endpoint"-biased
+
+- Let's look at an [[file:demo-project/documentation/demo-api.html][example API]] example API together
+  * Its [[file:demo-project/documentation/demo-api.raml][RAML source]] is available
+*** Content-type negotiation
+- Embrace content-type negotiation (XML /and/ JSON, not XML /or/ JSON)
+- XML API:
+  * Do create XSD for your data types, but communicate how it should be interpreted
+  * Do you reserve the right to add new tags and attributes?
+- JSON API:
+  * Create JSON schemas for everything
+  * In addition, verbosely describe all numeric types and their intended usage
+
+** Public developer guide
+*** But I've written the documentation!
+- Just a list of endpoints may not be enough for some developers
+- Lot of context and assumed knowledge
+  * Ubiquitous language may not extend to all new API users
+  * Lack of experience with JSON, XML, HTTP headers
+*** Different people, different learning styles
+- Write a developer guide that describes typical scenarios from a user's perspective
+  * How to get started (e.g. get an SSL certificate)
+  * How to list widgets in XML or JSON
+  * How to create a new widget
+- There's no shame in taking an English technical writing course
+- Pick tooling that suits your way of working (e.g. =HTTPie=, =org-mode= with =org-babel=, ...)
+** Public service dashboard
+*** Priorities!
+- What's the first thing you do when you get to your office?
+
+- Users will be curious about your service status
+  * If your users are internal, give them access to the actual dashboard
+  * In fact, consider giving them access to your source code and issue tracker as well
+*** Designing your dashboard
+- Your dashboard should be showing
+  * System metrics (load average, disk space, CPU usage, memory usage, network I/O, disk I/O)
+  * Your process' metrics (CPU usage, memory usage)
+  * Your VM's metrics (Heap committed, heap used, GC time, thread count, log count)
+  * Your framework's metrics (HTTP server open connections, HTTP client open connections, response times, response errors)
+  * Your business metrics (number of pets signed up, total invoice amount, size of received chat messages)
+
+- For each environment, after a few days examine the graphs
+  * Establish a baseline, and create an alert for /each/ metric
 * A selection of REST patterns
 ** Resource tags and caching
 *** Resources have versions
@@ -2003,21 +1991,23 @@ Notes:
 
 * Break(out) 5: API Design
 ** Designing an API
-*** Write a RAML file for the API of the system we've created events for
+*** Design the API of the system we've created events for
 - Identify /resources/ from /aggregates/ (and other nouns on the events)
-- The /commands/ are good candidates for methods (GET, PUT, POST, DELETE)
-- The /read model/ notes are a good starting point for request and response body
+- The /commands/ are good candidates for resource changes (=PUT=, =POST=, =DELETE=)
+- The /read model/ notes are a good starting point for =GET=
 
-1. Start with resources
-2. Then, add http methods
-3. Add request and response body examples if you have time
+- Start with resources (paths, query parameters)
+- Then, add http methods
+- Add request and response body examples if you have time
 
 - View [[file:demo-project/documentation/demo-api.raml]] if you need an example RAML file
 - Hints:
-  * RAML documentation and on-line editor: https://raml.org/
-  * RAML 1.0 spec: https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md/
+  * RAML spec: https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md/
+  * RAML documentation: https://raml.org/
+  * OpenAPI spec: https://spec.openapis.org/oas/v3.2.1.html
+  * OpenAPI online editor: https://editor.swagger.io/
 
-*** Alternative: Write a RAML file for an invoicing API
+*** Alternative: Design the API for an invoicing system
 - We're writing an invoicing service, that can send and receive invoices between companies
 
 - We need APIs to:
@@ -2031,8 +2021,10 @@ Notes:
 
 - View [[file:demo-project/documentation/demo-api.raml]] if you need an example RAML file
 - Hints:
-  * RAML documentation and on-line editor: https://raml.org/
-  * RAML 1.0 spec: https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md/
+  * RAML spec: https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md/
+  * RAML documentation: https://raml.org/
+  * OpenAPI spec: https://spec.openapis.org/oas/v3.2.1.html
+  * OpenAPI online editor: https://editor.swagger.io/
 * Micro service life cycle
 ** Dependency management
 *** Developing a new service
@@ -2068,12 +2060,15 @@ Notes:
   * Development environment (physical and technological)
   * Methodology
 
+- Evaluate changes in each of these if you want to increase quality
 *** Finding bugs
 - Fixing bugs is more expensive, the later they are found
   * While writing code: just think of different solution
   * While code is in review: communication, context switch, and the above
   * While code is in user testing: (much) more communication, context switch, and all the above
   * After code is released: (even) more communication, impact analysis in data, and all the above
+
+ [[https://testomat.io/blog/software-bug-cost/][source: testomat/IBM]] and [[https://www.forbes.com/councils/forbestechcouncil/2023/12/26/costly-code-the-price-of-software-errors/][source: forbes]]
 
 *** Preventing bugs
 - Test at different layers
@@ -2082,20 +2077,25 @@ Notes:
   * On one service (e.g. rest API): /Component tests/. Run in tens of seconds.
   * On a suite of services (e.g. UI): /End-to-end tests/. Run in minutes.
   * On your entire infrastructure: /Smoke tests/. Run periodically, on production, with external dependencies
+
+- All of the above must be part of your process and fully automated
+
 ** Deployment
 *** Getting your service out there
     "/All software has a test environment. Some software is lucky to have a separate production environment as well."/
         - unknown
 *** Doing deployments
-- Automate the environments themselves (=terraform=, =vagrant=, ...)
+- Automate the environments themselves (=helm=, =kustomize=, =terraform=, =vagrant=, ...)
 - All deployments to all environments must be automated
 - It's OK to have gatekeepers, e.g.
-  * After a PR is merged, automatic deploys are done to =dev= and =test= environments
+  * After a PR is merged, automatic deploys are done to =dev= and =staging= environments
   * The =prod= environment requires a manual button press
+
 - Forward deploy only
   * Rollbacks are a pain
   * Your next deploy is only minutes away
   * Emergencies should be rare (testing, early release, multiple environments)
+- Or, semantic versioning
 * Security architecture
 ** Authentication patterns
 *** User-to-service authentication
@@ -2133,15 +2133,38 @@ Notes:
 * Strategy and team dynamics
 ** Succeeding with microservices
 *** Microservices and agile
+- One service is written, maintained, deployed by one team
+  + Including its data
+
+- Supporting stakeholders
+  + How is our service found?
+  + How are our dashboards discovered?
+  + How is our team contacted?
+
 - Embrace change
-- Team visibility
-- Stakeholder support
+
 - Team(s) in same time zone as stakeholders (which includes users)
   * Distributed users? distributed team!
+
+- Consider [[https://www.datamesh-architecture.com/][Data Mesh]] architecture
+  * *You* are responsible for *others* being able to access data
+  * In a way that is useful for *their* use cases
+
 *** Migrating your monolith
+We want to finally get rid of our monolith!
+
 - Chainsaw anti-pattern
-- Strangler pattern
-- Maven modules
+  * Don't try to haphazardly cut your application in two
+
+- [[https://martinfowler.com/bliki/StranglerFigApplication.html][Strangler]] pattern
+  * Find a project that updates / replaces a small part of your application
+  * Take the opportunity to write that as a microservice
+  * Update your monolith to call your new new microservice
+  * Rinse and repeat
+
+- Quick win: modularization
+  * Maven modules
+  * Static package dependency analysis
 *** Do we need a separate dev/ops team? (no)
 - Automate everything (rolling production deploy)
 - Deploy in the morning, monitor your dashboards
@@ -2254,8 +2277,6 @@ CompletableFuture<Integer> compute(int input) {
 }
 #+END_SRC
 
-#+RESULTS:
-
 We can turn it into a string once the computation completes:
 
 #+BEGIN_SRC jshell
@@ -2281,10 +2302,28 @@ System.out.println(composed.get());
 : 256
 *** Summary
 - =CompletableFuture= is more expressive than callbacks
-- Wacky API
-- Complicated error handling (exceptions wrapped in =CompletionException=, because of cancellation that doesn't work)
+- Wacky API names
+- Complicated error handling
+  + Exceptions wrapped in =CompletionException=, because of cancellation (that doesn't work)
+*** VAVR's =Future= and =Promise=
+- VAVR includes a =io.vavr.concurrent.Future= with a nicer design:
+  * =map= and =flatMap= to compose (just like =Option= and =Seq=)
+  * proper division of roles
+    - =Future= holds a reference to an ongoing calculation
+    - =Promise= holds a value that can be eventually set
 
-- But, most importantly
+#+BEGIN_SRC java
+Future<Integer> compute(input) {
+    var result = Promise.<Integer>make();
+    launchBackgroundProcess(() -> {
+        // invoked when process completes
+        result.succeed(42);
+    });
+    return result.future();
+}
+#+END_SRC
+*** Wrapping up
+- Howeer:
   * Does this help with handling our big, slow, input, with many concurrent users?
 ** Reactive Streams
 *** Reactive manifesto
@@ -2432,7 +2471,7 @@ CompletionStage<Done> done = numbers
 - No =OutOfMemoryError=, akka buffers only as needed: /backpressure/
 
 
-* Break(out) 5
+* Break(out) 6
 ** Streams
 *** A directory crawler
 - Let's put our =demo-project= to some good use
@@ -2458,15 +2497,37 @@ CompletionStage<Done> done = numbers
 mvn exec:java -Dexec.mainClass="com.example.Main"
 #+END_SRC
 
+* Wrapping up
+** Conclusion
+*** Summary
+- Systems architecture is about making choices
+
+- Know at least two of each:
+  + Programming language
+  + System container setup
+  + Program flow style
+  + Data store
+  + Message queue
+  + Deployment tool
+
+- Have periodic, and real, retrospectives in your team
+*** Thank you
+Thank you for your participation!
+
+Any questions or comments, at any time?
+
+Jan Ypma
+=jan@ypmania.net=
+
 * Interesting links
 https://world.hey.com/joaoqalves/disasters-i-ve-seen-in-a-microservices-world-a9137a51
 https://copyconstruct.medium.com/testing-in-production-the-safe-way-18ca102d0ef1
 
 * Notes
-- Add rabbitMQ stream example
-- Pure function example (split up business logic and side effects)
-- Screen sharing of others??
-
-- Draw the UML diagram from https://developer.okta.com/blog/2019/08/22/okta-authjs-pkce
-- Add HTTP cats https://http.cat/401
-- Add comics
+** Bill of materials for physical course
+- Orange post-its
+- Blue, Purple, Pink, Green (same size)
+- Yellow small (actor)
+- Yellow big (aggregate)
+- Markers
+- Tape
