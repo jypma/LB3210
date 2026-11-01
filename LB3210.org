@@ -6,6 +6,8 @@
 * Introduction
 ** Getting started
 *** Welcome
+#+LATEX: \newpage
+#+ATTR_HTML: :width 25%
 [[file:graphics/microservices.png]]
 *** This course
 
@@ -2371,10 +2373,12 @@ partition "Graph" {
 }
 #+END_SRC
 
+#+ATTR_HTML: :width 20%
+#+ATTR_LATEX: :width .9\linewidth :height 250pt
 #+RESULTS:
 [[file:graphics/streams.png]]
 
-
+*** Pekko Streams concepts (contd.)
 - /Graph/ is a *blueprint* for a closed, finite network of *stages*, which communicate by streaming elements
 - =GraphStage<S extends Shape>.= is one processing stage within a graph
   * taking elements in through zero or more *Inlets*
@@ -2383,7 +2387,6 @@ partition "Graph" {
 - All built-in graph stages embrace /backpressure/ and /bounded processing/
 
 *** Pekko graph stage types
-[[file:streams.png]]
 
 - =Source<T, M>.= has one outlet of type =T=
 - =Sink<T, M>.= has one inlet of type =T=
