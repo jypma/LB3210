@@ -15,18 +15,19 @@
 Slides available here:
 [[https://github.com/jypma/LB3210][https://github.com/jypma/LB3210]]
 
+- What you're seeing here i literally in the file =LB3210.org= (rendered OK by Github)
 - PDF of slides will be available at completion
-- Pull requests with fixes to our typos are welcome :-)
 
 *** About your instructor
 - Jan Ypma
   * Almost 24 years of Java experience (yay, generics!)
-  * Scala, Groovy, C++, Rust, Lisp
+  * Java, Scala, C++, Rust, Lisp
   * Contributor to =akka= (Apache Pekko), =akka-http= and others
   * Functional programming and distributed systems
   * Agile coach and fan of Domain-Driven Design
   * =jan@ypmania.net=, https://linkedin.com/in/jypma
 
+- Warning: Subjectivity ahead!
 
 *** Schedule, day 1
 |  Time | Duration | Activity                                  | Weight |
@@ -1427,7 +1428,12 @@ Suggestions:
 
 * Wrapping up today
 ** Let's do another round
-*** Please share!
+*** Temperature check
+
+| Name | @@@@@ I'm learning new stuff | @@@@@ I know microservices |
+|------+------------------------------+----------------------------|
+|      |                              |                            |
+|------+------------------------------+----------------------------|
 
 * Start of day 2
 ** Getting started
@@ -2499,6 +2505,13 @@ mvn exec:java -Dexec.mainClass="com.example.Main"
 
 * Wrapping up
 ** Conclusion
+*** Temperature check
+
+| Name | @@@@@ I'm learning new stuff | @@@@@ I know microservices |
+|------+------------------------------+----------------------------|
+|      |                              |                            |
+|------+------------------------------+----------------------------|
+
 *** Summary
 - Systems architecture is about making choices
 
