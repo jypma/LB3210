@@ -2373,7 +2373,7 @@ partition "Graph" {
 }
 #+END_SRC
 
-#+ATTR_HTML: :width 20%
+#+ATTR_HTML: :width 10%
 #+ATTR_LATEX: :width .9\linewidth :height 250pt
 #+RESULTS:
 [[file:graphics/streams.png]]
