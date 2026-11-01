@@ -3,6 +3,7 @@
 #+options: H:3
 #+latex_header: \hypersetup{colorlinks=true,linkcolor=blue}
 #+LATEX_CLASS_OPTIONS: [8pt]
+#+BEAMER_THEME: Rochester [height=12pt]
 * Introduction
 ** Getting started
 *** Welcome
@@ -577,7 +578,9 @@ docker-compose up -d
 
 * Data architecture
 ** Domain-driven design
-   [[file:graphics/ddd.jpg]]
+*** The book
+#+ATTR_LATEX: :width .9\linewidth :height 250pt
+[[file:graphics/ddd.jpg]]
 
 *** Introduction
 - Software methodology
