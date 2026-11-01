@@ -5,17 +5,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.CompletionStage;
 
-import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.japi.pf.PFBuilder;
-import akka.stream.IOResult;
-import akka.stream.alpakka.file.javadsl.Directory;
-import akka.stream.javadsl.FileIO;
-import akka.stream.javadsl.Framing;
-import akka.stream.javadsl.FramingTruncation;
-import akka.stream.javadsl.Sink;
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.japi.pf.PFBuilder;
+import org.apache.pekko.stream.IOResult;
+import org.apache.pekko.stream.connectors.file.javadsl.Directory;
+import org.apache.pekko.stream.javadsl.FileIO;
+import org.apache.pekko.stream.javadsl.Framing;
+import org.apache.pekko.stream.javadsl.FramingTruncation;
+import org.apache.pekko.stream.javadsl.Sink;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
+
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 

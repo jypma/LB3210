@@ -16,6 +16,7 @@ Slides available here:
 [[https://github.com/jypma/LB3210][https://github.com/jypma/LB3210]]
 
 - What you're seeing here i literally in the file =LB3210.org= (rendered OK by Github)
+- Have you already cloned that repository?  Great! Please, =git pull=
 - PDF of slides will be available at completion
 
 *** About your instructor

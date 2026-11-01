@@ -9,3 +9,4 @@ target
 .mvn
 /solutions/exercise-3-chat-room/bin/
 /_minted-LB3210/
+/**/.project.el
